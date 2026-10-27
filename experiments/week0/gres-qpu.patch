@@ -1,0 +1,26 @@
+diff --git a/config/26.05/slurm.conf b/config/26.05/slurm.conf
+index 481591b..86f3f05 100644
+--- a/config/26.05/slurm.conf
++++ b/config/26.05/slurm.conf
+@@ -14,7 +14,7 @@ SlurmctldHost=slurmctld
+ #EpilogSlurmctld=
+ #FirstJobId=1
+ #MaxJobId=67043328
+-GresTypes=gpu
++GresTypes=gpu,qpu
+ #GroupUpdateForce=0
+ #GroupUpdateTime=600
+ #JobFileAppend=0
+diff --git a/docker-entrypoint.sh b/docker-entrypoint.sh
+index 04aa109..e5ae2d1 100644
+--- a/docker-entrypoint.sh
++++ b/docker-entrypoint.sh
+@@ -164,7 +164,7 @@ then
+     # -Z: dynamic node self-registration with slurmctld
+     # Feature=cpu: tag for cpu partition NodeSet matching
+     exec /usr/sbin/slurmd -Z -Dvvv \
+-        --conf "Feature=cpu"
++        --conf "Feature=cpu Gres=qpu:1"
+ fi
+ 
+ if [ "$1" = "slurmd-gpu" ]

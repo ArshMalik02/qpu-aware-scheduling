@@ -1,3 +1,29 @@
+## 2026-10-26 — Fake QPU resource (GRES) + contention test
+
+**Setup:** same cluster. Added a count-only `qpu` GRES. Both CPU workers come from one compose service, so each got one QPU (2 total).
+
+**Changes** (in slurm-docker-cluster; saved as `experiments/week0/gres-qpu.patch`):
+- `config/26.05/slurm.conf`: `GresTypes=gpu` → `GresTypes=gpu,qpu`
+- `docker-entrypoint.sh`: dynamic slurmd registration `--conf "Feature=cpu"` → `--conf "Feature=cpu Gres=qpu:1"`
+
+Nodes register dynamically (`slurmd -Z`), so there are no `NodeName=` lines. A node advertises its GRES at startup. No `gres.conf` needed for a count-only resource.
+
+**Bug: the controller trusted its stale record over the node.** The workers restarted before the new slurm.conf was pushed, so slurmctld logged `Invalid GRES configured on node c1: qpu:1` and stored both nodes with 0 QPUs. After a full restart it logged `Ignoring excess count on node c1 (1 > 0)`: the node reported 1, the controller kept its stored 0. Fix: `scontrol delete nodename=c1,c2` and restart the workers. Both then showed `qpu:1`.
+
+**Contention test:** 3 jobs, each `--gres=qpu:1 --mem=500M -c1`, on 2 QPUs.
+
+| Job | State | Node |
+|---|---|---|
+| q1 | RUNNING | c2 |
+| q2 | RUNNING | c1 |
+| q3 | PENDING (Resources) | — |
+
+Both nodes showed CPUs `1/3/0/4` (3 idle each). The only thing blocking q3 was the QPU. c2 showed `mixed-`: the backfill scheduler had already planned it for q3.
+
+**Takeaway:** Slurm sees a QPU as a counter, 1 or 0. It doesn't know whether the QPU just recalibrated or is drifting.
+
+**Next:** quantum execution stack: run circuits on Aer and a fake IBM backend, time a toy VQE loop (classical vs quantum), find where QRMI acquire/release sits in a Slurm job. Week 2 packaging note: bake or push slurm.conf before workers start, to avoid the stale-record bug.
+
 ## 2026-10-14 — Slurm from the inside + overcommit test
 
 **Setup:** slurm-docker-cluster (Slurm 26.05.2, EL9 aarch64) on an M1 MacBook Air via Docker Desktop. Two worker nodes (c1, c2). Each reports 4 CPUs and 7851 MB (the Docker VM's full budget), so Slurm sees 8 CPUs; the VM has 4.
