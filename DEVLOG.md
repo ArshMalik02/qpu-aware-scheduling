@@ -1,3 +1,41 @@
+## 2026-11-02: Cluster moved into the repo + calibration feed skeleton
+
+Week 2 · Night 1 card, done early (planned for Nov 3). Everything is **simulated**.
+
+**Cluster (`cluster/`).** Copied in slurm-docker-cluster tag 3.0.2 (`9001503`, Slurm 26.05.5 default) and applied `experiments/week0/gres-qpu.patch`. Bring it up with `docker compose up -d --build`, then check it with `./verify_qpu.sh`. I tested from a clean `down -v` on an x86_64 Linux Docker host, not the M1. The image build there needed the sandbox's proxy CA injected into a scratch copy of the Dockerfile; the committed Dockerfile doesn't include that.
+
+```
+NODELIST GRES STATE
+c1 qpu:1 idle
+c2 qpu:1 idle
+   JOBID NAME     STATE NODELIST(REASON) NODELIST
+       3   q3   PENDING  (Resources)
+       2   q2   RUNNING           c1 c1
+       1   q1   RUNNING           c2 c2
+```
+
+Same result as Week 0: 2 RUNNING, 1 PENDING (Resources).
+
+**What broke:**
+1. *Stale config, root cause.* `/etc/slurm` is a named volume, and Docker seeds a named volume from the image only when it creates it. After a rebuild the volume keeps the old slurm.conf, which is the likely source of the Oct 26 `qpu:0` record. Fix: the image keeps `/etc/slurm.baked/slurm.conf`, and the slurmctld entrypoint copies it over on start, before any worker registers. Test: I set the volume's file back to `GresTypes=gpu` and ran `down` then `up` without `-v`. It came back as `gpu,qpu`, both nodes showed `qpu:1`, and the test passed.
+2. *Worker crashed on startup (upstream race).* `qpu-cpu-worker-2` exited 1 because it started 0.2 s before worker-1. `detect_replica_number` stopped at the first DNS name that didn't resolve yet and returned 1, and `set -e` then killed the entrypoint. Fix: scan every index and retry for up to 15 s.
+3. *Node naming.* Without a `.env`, the compose project name didn't match the `slurm-` prefix the entrypoint resolves, so nodes would have fallen back to container IDs. Fix: `name: ${COMPOSE_PROJECT_NAME:-qpu}` in compose, plus a matching worker default. This also keeps the volumes separate from the old Week 0 checkout.
+
+**spank-plugins demo (15-min look).** `demo/qrmi/slurm-docker-cluster/INSTALL.md` pins slurm-docker-cluster **0.9.0** (Slurm 25.05.3, static nodes, a login node). Its `file.patch` rewrites that layout (slurm.conf, plugstack.conf, qrmi_config.json, compose), so it won't apply to 3.0.2. Using it for Week 3 means either running the demo as a separate cluster or porting plugstack.conf, qrmi_config.json and the QRMI build onto `cluster/`. I couldn't clone `qiskit-community/simulated_quantum_resource` (git asked for credentials, so it's private or the URL is wrong), so the claim that status is hard-coded online at `qsa_sim/qsa_service.py` L304-305 is still **unverified**. Plan unchanged.
+
+**Calibration feed (`feed/`).** A stdlib HTTP service with `GET /qpus` and `GET /qpus/<id>/state`; `?at=` pins the time. State is a pure function of seed, QPU id and simulated time, with `--speed` to speed up the clock. Model: a full recal every day (100 min), a quick recal about every 6 h (40 min), with `paused` while a recal runs; daily quality follows an AR(1) with φ = 0.15, so a score from yesterday's calibration says little about today's (lag-1 ACF 0.10–0.20); drift since the last recal; 5 %/day maintenance outages. There are 11 unit tests, including a sample ACF of 0.15 ± 0.06 over 3000 days. Sample (`--seed 42`, `GET /qpus/qpu1/state?at=2026-11-03T03:00:00Z`):
+
+```json
+{"id": "qpu1", "status": "online", "status_reason": "calibrated (simulated)",
+ "next_recal": {"start": "2026-11-03T03:53:43Z", "kind": "full", "duration_min": 100},
+ "metrics": {"t1_us": 223.5, "readout_err": 0.01438, "gate_err_1q": 0.0003404},
+ "updated_at": "2026-11-03T03:00:00Z", "simulated": true}
+```
+
+**Takeaway:** Slurm still sees only `qpu:1`. The feed now knows qpu1 goes into a 100-minute full recal at 03:53, but nothing connects the two yet.
+
+**Next:** rerun `./verify_qpu.sh` on the M1 (aarch64) to confirm. Week 3: have a Slurm hook (job_submit.lua or a SPANK plugin) read `/qpus/<id>/state`, and put the feed in compose.
+
 ## 2026-10-26 — Fake QPU resource (GRES) + contention test
 
 **Setup:** same cluster. Added a count-only `qpu` GRES. Both CPU workers come from one compose service, so each got one QPU (2 total).
