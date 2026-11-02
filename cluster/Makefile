@@ -4,7 +4,7 @@
 .DEFAULT_GOAL := help
 
 # Supported Slurm versions
-SUPPORTED_VERSIONS := 25.11.8 26.05.5
+SUPPORTED_VERSIONS := 25.11.8 26.05.2 26.05.5
 # Read default version from .env.example (source of truth)
 DEFAULT_VERSION := $(shell grep '^SLURM_VERSION=' .env.example | cut -d= -f2)
 

@@ -7,7 +7,7 @@ in Slurm and has no quantum hardware or simulator behind it.
 | | |
 |---|---|
 | Upstream | `giovtorres/slurm-docker-cluster` tag **3.0.2**, commit `9001503b42e7277c7ff45c08aeecdb6427474d68` (2026-10-18) |
-| Slurm | 26.05.5 by default (`SLURM_VERSION`). Week 0 ran 26.05.2; set `SLURM_VERSION=26.05.2` in `.env` to match. |
+| Slurm | **26.05.2** by default, pinned to match Week 0 (upstream 3.0.2 defaults to 26.05.5). Override with `SLURM_VERSION` in `.env`. |
 | Nodes | `c1`, `c2` (dynamic registration, `slurmd -Z`), each `Gres=qpu:1` → 2 QPUs total |
 | Upstream docs | [README.upstream.md](README.upstream.md), license in [LICENSE](LICENSE) (MIT) |
 

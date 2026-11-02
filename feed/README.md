@@ -55,24 +55,30 @@ schedule and different metrics.
 
 ## Model and defaults
 
-- **Recalibration windows.** Each QPU runs a full recal once a simulated day, at a per-QPU hour
-  between 01:00 and 05:00 (±15 min), and quick recals about every 6 h after that. Defaults:
-  **quick 40 min, full 100 min** (Mansfield et al., arXiv:2509.12949). Override with
-  `--quick-recal-min` and `--full-recal-min`.
-- **Day-to-day drift.** Each day's post-calibration quality is an AR(1) z-score with φ = 0.15
-  (`--day-phi`): a score from yesterday's calibration says little about today's (lag-1 ACF 0.10–0.20)
-  (Deng et al., arXiv:2508.21231). The quality multiplies T1 down and error rates up by `exp(0.15·z)`.
-- **Within-day drift.** Since the last finished recal, T1 decays by about 2 %/h, readout error grows
-  by about 3 %/h and 1q gate error by about 5 %/h. Each recal resets the drift.
-- **Outages.** Each day has a 5 % chance of a 1–3 h maintenance window (`offline`).
-- **Noise.** About 1–2 % multiplicative noise per simulated minute, so values move between reads.
+Only the recal durations and the day-to-day correlation come from a source. Everything marked
+*assumed* is a placeholder I picked for the simulation; it isn't taken from any paper or device.
 
-Baselines (T1 250 µs, readout 1.2 %, 1q gate 2.5e-4) are illustrative and don't describe any real device.
+- **Recalibration windows.** Defaults: **quick 40 min, full 100 min** (Mansfield et al.,
+  arXiv:2509.12949). Override with `--quick-recal-min` and `--full-recal-min`. *Assumed:* one full
+  recal per simulated day at a per-QPU hour between 01:00 and 05:00 (±15 min), and a quick recal
+  about every 6 h after that.
+- **Day-to-day drift.** Each day's post-calibration quality is an AR(1) z-score with φ = 0.15
+  (`--day-phi`). A score from yesterday's calibration says little about today's (lag-1 ACF
+  0.10–0.20: T1 0.10, readout 0.16, 1q gate 0.20, over 250 days of daily calibration on LRZ's
+  20-qubit IQM) (Deng, Schulz & Schulz, arXiv:2508.21231). *Assumed:* quality scales T1 down and
+  error rates up by `exp(0.15·z)`.
+- **Within-day drift.** *Assumed:* since the last finished recal, T1 decays by about 2 %/h, readout
+  error grows by about 3 %/h and 1q gate error by about 5 %/h. Each recal resets the drift.
+- **Outages.** *Assumed default, not from a source:* each day has a 5 % chance of a 1–3 h
+  maintenance window (`offline`).
+- **Noise.** *Assumed:* about 1–2 % multiplicative noise per simulated minute, so values move between reads.
+- **Baselines.** *Assumed:* T1 250 µs, readout 1.2 %, 1q gate 2.5e-4. These are illustrative and
+  don't describe any real device.
 
 ## References
 
-- Mansfield et al., arXiv:2509.12949: source for the quick (40 min) and full (100 min) recalibration durations.
-- Deng et al., arXiv:2508.21231: source for the weak day-to-day correlation of calibration quality (lag-1 ACF 0.10–0.20).
+- Mansfield et al., [arXiv:2509.12949](https://arxiv.org/abs/2509.12949): quick (40 min) and full (100 min) recalibration durations.
+- Deng, Schulz & Schulz, [arXiv:2508.21231](https://arxiv.org/abs/2508.21231): day-to-day lag-1 autocorrelation of calibration metrics (0.10–0.20).
 
 ## Tests
 
