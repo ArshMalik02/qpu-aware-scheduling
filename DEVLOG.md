@@ -7,7 +7,7 @@ Every row was re-checked against source at a pinned commit, or against the paper
 
 ## 2026-11-02: Cluster moved into the repo + calibration feed skeleton
 
-Week 2 · Night 1 card, done early (planned for Nov 3). Everything is **simulated**.
+Week 2, part 1. Everything is **simulated**.
 
 **Cluster (`cluster/`).** Copied in slurm-docker-cluster tag 3.0.2 (`9001503`, Slurm 26.05.5 default; now pinned to 26.05.2) and applied `experiments/week0/gres-qpu.patch`. Bring it up with `docker compose up -d --build`, then check it with `./verify_qpu.sh`. I tested from a clean `down -v` on an x86_64 Linux Docker host, not the M1. The image build there needed the sandbox's proxy CA injected into a scratch copy of the Dockerfile; the committed Dockerfile doesn't include that.
 

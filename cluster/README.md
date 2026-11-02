@@ -49,4 +49,4 @@ docker compose restart cpu-worker
 
 `qiskit-community/spank-plugins` `demo/qrmi/slurm-docker-cluster/` targets slurm-docker-cluster
 **0.9.0** (Slurm 25.05.3, static `NodeName` lines, six containers including a login node). Its
-`file.patch` rewrites that older layout, so it won't apply to this 3.0.2 copy. See DEVLOG 2026-11-03.
+`file.patch` rewrites that older layout, so it won't apply to this 3.0.2 copy. See DEVLOG 2026-11-02.
