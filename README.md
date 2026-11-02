@@ -10,7 +10,7 @@ Everything here runs on a laptop against a **simulated QPU**. All results are la
 
 ## The gap (Week 1 reading)
 
-From the QRMI SPANK plugin source and the docs I read (full sources: `docs/landscape.md`, coming in Week 1):
+From the QRMI SPANK plugin source and the docs I read (full sources and commits: [docs/landscape.md](docs/landscape.md)):
 
 | System | How Slurm sees the QPU | Live QPU state that reaches the scheduler |
 |---|---|---|

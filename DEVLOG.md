@@ -1,3 +1,10 @@
+## 2026-11-02: Week 1 landscape: where QPU state is static
+
+In every Slurm integration I read (the QRMI SPANK plugin, the QRMI license-poller example, QDMI/MQT Core, Pasqal via QRMI, LRZ/MQSS), the most live QPU state that reaches the scheduler is an up/busy flag at admission. The SPANK plugin checks only `is_accessible` inside slurmstepd *after* allocation and cancels the job on failure.
+Nothing I found passes calibration drift, recal windows or a prediction into placement or backfill. The closest measured work (Rocco et al., arXiv:2508.04217) releases classical nodes per job phase, not by QPU state.
+Signals to target: day-to-day drift (lag-1 ACF 0.10–0.20, Deng et al. Table I), 40/100-min recal windows (Mansfield et al.), and hybrid-job idle under IBM's architecture 2.
+Every row was re-checked against source at a pinned commit, or against the paper's full text. qBraid OS and Qblox/NVQLink are still unverified. Full table and sources: [docs/landscape.md](docs/landscape.md).
+
 ## 2026-11-02: Cluster moved into the repo + calibration feed skeleton
 
 Week 2 · Night 1 card, done early (planned for Nov 3). Everything is **simulated**.
