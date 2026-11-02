@@ -45,6 +45,16 @@ docker exec slurmctld scontrol delete nodename=c1,c2
 docker compose restart cpu-worker
 ```
 
+If `up` fails with `The container name "/mysql" is already in use`: upstream sets fixed
+`container_name`s (`mysql`, `slurmdbd`, `slurmctld`, `slurmrestd`) that the project name doesn't change,
+so another slurm-docker-cluster checkout on the same machine still holds them. That checkout also uses
+host ports 3022 and 6820. Stop it first. Neither command deletes volumes:
+
+```bash
+docker compose down                                  # run in the other checkout
+docker rm -f mysql slurmdbd slurmctld slurmrestd     # or, if that checkout is gone
+```
+
 ## spank-plugins demo (Step 1-alt, not adopted)
 
 `qiskit-community/spank-plugins` `demo/qrmi/slurm-docker-cluster/` targets slurm-docker-cluster
