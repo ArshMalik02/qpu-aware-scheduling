@@ -31,7 +31,7 @@ Details, numbers and bugs hit along the way: [DEVLOG.md](DEVLOG.md).
 ## Roadmap
 
 - [x] Week 0: Slurm internals, overcommit test, fake `qpu` GRES
-- [ ] Week 1 (in progress): Landscape: where QPU state does and doesn't enter scheduling
+- [x] Week 1: Landscape: where QPU state does and doesn't enter scheduling
 - [x] Week 2: Cluster in this repo (`docker compose up`) + a Qiskit Aer job through `--gres=qpu:1`
 - [ ] Week 3: QRMI against a simulator + a simulated calibration/recal feed
 - [ ] Week 4: Static-allocation baseline: classical node-seconds idle, queue wait, QPU utilization (3 seeded runs)
