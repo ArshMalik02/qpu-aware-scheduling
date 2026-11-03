@@ -9,4 +9,7 @@
 # The qpu GRES is a Slurm counter only; the circuit runs on Aer (CPU). SIMULATED.
 set -euo pipefail
 echo "host=$(hostname) arch=$(uname -m) job=${SLURM_JOB_ID}"
+# Record the live allocation (per-node GRES=qpu:1) while the job is RUNNING;
+# after completion scontrol no longer shows it.
+scontrol show job -d "$SLURM_JOB_ID" > "/data/jobs/out/aer_bell_${SLURM_JOB_ID}.alloc.txt"
 python3 /data/jobs/aer_bell.py
