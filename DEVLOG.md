@@ -1,3 +1,39 @@
+## 2026-11-03: Aer job through --gres=qpu:1 + toy VQE timing
+
+**Setup:** the Docker cluster from `cluster/` (Slurm 26.05.2, nodes c1 and c2, each with `qpu:1`), run on **x86_64** Linux. Qiskit 2.6.1, qiskit-aer 0.18.2, numpy 2.5.4 and scipy 1.18.1 are baked into the image from wheels (`cluster/requirements-jobs.txt`). Two batch jobs (`jobs/`), each with `--gres=qpu:1 -c1 --mem=500M`, were submitted together by `jobs/verify_aer.sh`. Everything is **simulated**: Aer on CPU, and the `qpu` GRES is a counter.
+
+**What broke:**
+1. *Docker Hub rate limit.* Rebuilding from scratch got `429 Too Many Requests` resolving `golang:1.26-bookworm` and was still failing after about 7.5 min of backoff. I tested the new pip layer by running the same `RUN` commands on top of the already-built 26.05.2 image instead. The full `docker compose up -d --build` from scratch with the new layer is **not yet run**.
+2. *verify_aer.sh false PASS.* The output checks were a Python heredoc piped into `docker exec` without `-i`, so Python read empty stdin, exited 0, and checked nothing. Fixed: the checks now live in `jobs/check_outputs.py`, and the script fails unless the checker prints a sentinel. Negative test: corrupted Bell counts (3500/596) give `BAD` and exit 1.
+
+**Results** (jobs 6 and 7; outputs in `jobs/results/x86_64/`):
+
+Bell, 4096 shots, `seed_simulator=1234`, on c2: `{"00": 2074, "11": 2022}`.
+
+| Toy VQE (COBYLA, maxiter 30), on c1 | |
+|---|---|
+| Iterations | 30 |
+| Σ quantum_s (Aer estimator calls) | 0.0828 s |
+| Σ classical_s (optimizer + overhead + binding) | 0.0409 s |
+| Quantum fraction | 0.669 |
+| setup_s (imports, build, transpile) | 2.007 s |
+| Total wall (script) | 2.131 s |
+
+| sacct | Submit | Start | Queue wait | Elapsed | Node |
+|---|---|---|---|---|---|
+| aer_bell (6) | 18:55:13 | 18:55:13 | 0 s | 00:00:02 | c2 |
+| vqe_toy (7) | 18:55:13 | 18:55:13 | 0 s | 00:00:03 | c1 |
+
+With two free QPUs both jobs started immediately; sacct has 1 s resolution. Right after submit, `squeue` showed them briefly PENDING (`None`/`Priority`) until the next scheduling pass. These numbers reflect this Docker setup on x86_64, not hardware. Setup (mostly imports) is about 16× the whole optimization loop.
+
+**Where QRMI acquire/release would sit in this job** (if it ran under the QRMI SPANK plugin, spank-plugins@3455388):
+- *Acquire:* in `slurm_spank_init_post_opt` in slurmstepd, after nodes are allocated. It calls `is_accessible` and `acquire`; on failure the error is deferred to `task_init`, which cancels the job ([docs/landscape.md](docs/landscape.md)). So acquire runs after allocation and before `python3 aer_bell.py` starts, and the scheduler never looked at QPU state when it placed the job on c2.
+- *Release:* in `slurm_spank_exit`, "called once just before slurmstepd exits in remote context" ([`spank_qrmi.c` L722](https://github.com/qiskit-community/spank-plugins/blob/3455388/plugins/spank_qrmi/spank_qrmi.c#L722)). It walks the acquired resources and calls `_release_qpu` ([L740](https://github.com/qiskit-community/spank-plugins/blob/3455388/plugins/spank_qrmi/spank_qrmi.c#L740)), which calls `qrmi_resource_release` ([L898](https://github.com/qiskit-community/spank-plugins/blob/3455388/plugins/spank_qrmi/spank_qrmi.c#L898)). So the QPU is held from just after allocation until the step exits, including the classical parts of the loop.
+
+**Takeaway:** in this toy loop the simulated quantum calls are about two-thirds of the iteration time, but the job holds its `qpu:1` (and, under QRMI, the acquired QPU) for the whole run, setup included. Nothing in this path asks whether the QPU is calibrated.
+
+**Next:** run `cd cluster && docker compose up -d --build && ./verify_qpu.sh && cd .. && jobs/verify_aer.sh` on the M1 (aarch64), which is **not yet verified**. Week 3: feed state into the scheduler.
+
 ## 2026-11-02: Week 1 landscape: where QPU state is static
 
 In every Slurm integration I read (the QRMI SPANK plugin, the QRMI license-poller example, QDMI/MQT Core, Pasqal via QRMI, LRZ/MQSS), the most live QPU state that reaches the scheduler is an up/busy flag at admission. The SPANK plugin checks only `is_accessible` inside slurmstepd *after* allocation and cancels the job on failure.
