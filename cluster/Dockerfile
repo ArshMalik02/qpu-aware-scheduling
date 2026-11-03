@@ -359,12 +359,14 @@ RUN mkdir -p /etc/slurm.baked && cp /etc/slurm/slurm.conf /etc/slurm.baked/slurm
 
 # qpu-aware-scheduling: bake Qiskit + Aer (simulated QPU jobs in ../jobs/) into the image.
 # --only-binary makes a missing wheel fail the build instead of silently compiling Aer.
-COPY requirements-jobs.txt /tmp/requirements-jobs.txt
+# constraints-jobs.txt pins every transitive dependency (from pip freeze).
+COPY requirements-jobs.txt constraints-jobs.txt /tmp/
 RUN set -ex \
     && dnf -y install python3.12-pip \
-    && python3.12 -m pip install --no-cache-dir --only-binary=:all: -r /tmp/requirements-jobs.txt \
+    && python3.12 -m pip install --no-cache-dir --only-binary=:all: \
+         -r /tmp/requirements-jobs.txt -c /tmp/constraints-jobs.txt \
     && dnf clean all \
-    && rm -rf /var/cache/dnf /tmp/requirements-jobs.txt
+    && rm -rf /var/cache/dnf /tmp/requirements-jobs.txt /tmp/constraints-jobs.txt
 
 COPY --chown=slurm:slurm --chmod=0600 examples /root/examples
 

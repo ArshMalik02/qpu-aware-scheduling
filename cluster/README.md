@@ -41,6 +41,8 @@ Applied from [`experiments/week0/gres-qpu.patch`](../experiments/week0/gres-qpu.
    [`requirements-jobs.txt`](requirements-jobs.txt) (qiskit 2.6.1, qiskit-aer 0.18.2, numpy 2.5.4,
    scipy 1.18.1) with `--only-binary=:all:`, so every node can run the simulated Aer jobs in
    [`../jobs/`](../jobs/). A missing wheel fails the build instead of compiling Aer from source.
+   [`constraints-jobs.txt`](constraints-jobs.txt) (a `pip freeze` of the image) is passed with `-c`, so
+   transitive dependencies are pinned too.
 
 If nodes still show `qpu:0`:
 
