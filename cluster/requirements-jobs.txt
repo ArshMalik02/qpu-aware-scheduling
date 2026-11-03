@@ -1,0 +1,6 @@
+# Python packages baked into the cluster image for the jobs in ../jobs/.
+# Exact pins; installed with --only-binary=:all: (wheels exist for x86_64 and aarch64).
+qiskit==2.6.1
+qiskit-aer==0.18.2
+numpy==2.5.4
+scipy==1.18.1

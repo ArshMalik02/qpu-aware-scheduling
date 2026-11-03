@@ -357,6 +357,15 @@ RUN set -ex \
 # qpu:0 record from DEVLOG 2026-10-26). slurmctld re-syncs from this copy on start.
 RUN mkdir -p /etc/slurm.baked && cp /etc/slurm/slurm.conf /etc/slurm.baked/slurm.conf
 
+# qpu-aware-scheduling: bake Qiskit + Aer (simulated QPU jobs in ../jobs/) into the image.
+# --only-binary makes a missing wheel fail the build instead of silently compiling Aer.
+COPY requirements-jobs.txt /tmp/requirements-jobs.txt
+RUN set -ex \
+    && dnf -y install python3.12-pip \
+    && python3.12 -m pip install --no-cache-dir --only-binary=:all: -r /tmp/requirements-jobs.txt \
+    && dnf clean all \
+    && rm -rf /var/cache/dnf /tmp/requirements-jobs.txt
+
 COPY --chown=slurm:slurm --chmod=0600 examples /root/examples
 
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh

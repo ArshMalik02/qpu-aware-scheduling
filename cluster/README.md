@@ -37,6 +37,10 @@ Applied from [`experiments/week0/gres-qpu.patch`](../experiments/week0/gres-qpu.
    workers' `COMPOSE_PROJECT_NAME` defaults to `qpu` too. The entrypoint names nodes `c<N>` by
    resolving `${COMPOSE_PROJECT_NAME}-cpu-worker-N`. Without a matching name it falls back to the
    container ID. The new name also keeps these volumes separate from an older checkout's `slurm_*` volumes.
+5. `Dockerfile` (runtime stage): one layer installs `python3.12-pip` and the exact pins in
+   [`requirements-jobs.txt`](requirements-jobs.txt) (qiskit 2.6.1, qiskit-aer 0.18.2, numpy 2.5.4,
+   scipy 1.18.1) with `--only-binary=:all:`, so every node can run the simulated Aer jobs in
+   [`../jobs/`](../jobs/). A missing wheel fails the build instead of compiling Aer from source.
 
 If nodes still show `qpu:0`:
 
