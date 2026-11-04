@@ -15,7 +15,8 @@ timeout_s=${VERIFY_TIMEOUT_S:-300}
 
 echo "==> Staging jobs/ into slurmctld:/data/jobs"
 ctl mkdir -p /data/jobs/out
-docker cp jobs/. slurmctld:/data/jobs/
+# --quiet: docker cp otherwise prints "Successfully copied ... to <absolute host path>".
+docker cp --quiet jobs/. slurmctld:/data/jobs/
 ctl rm -rf /data/jobs/results
 
 echo "==> Submitting"
@@ -78,9 +79,12 @@ arch=$(ctl uname -m)
 dest="jobs/results/$arch"
 echo "==> Copying results to $dest/"
 mkdir -p "$dest"
+n=0
 for f in "aer_bell_$bell.json" "aer_bell_$bell.out" "aer_bell_$bell.alloc.txt" \
          "vqe_toy_$vqe.json" "vqe_toy_$vqe.csv" "vqe_toy_$vqe.out" "vqe_toy_$vqe.alloc.txt"; do
-    docker cp "slurmctld:/data/jobs/out/$f" "$dest/$f"
+    docker cp --quiet "slurmctld:/data/jobs/out/$f" "$dest/$f"
+    n=$((n + 1))
 done
 echo "$sacct_txt" > "$dest/sacct_${bell}_${vqe}.txt"
+echo "    copied $((n + 1)) files to $dest/"
 echo "PASS"
