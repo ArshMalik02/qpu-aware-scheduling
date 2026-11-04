@@ -27,23 +27,23 @@ Bell, 4096 shots, `seed_simulator=1234`, on c1: `{"00": 2074, "11": 2022}`. Allo
 
 There were two free qpu GRES slots, yet vqe_toy sat PENDING (`None`) for about 2 s until the next scheduling pass and then ran on c1 after aer_bell had finished. In an earlier run both started in the same second, on different nodes. sacct has 1 s resolution. Across three x86_64 runs the quantum fraction was 0.64–0.70 and setup 0.96–2.0 s, so treat these as rough. Here setup is about 5× the whole optimization loop. These numbers reflect this Docker setup on x86_64, not hardware.
 
-**aarch64 (M1) run.** The same commands passed on the M1 Mac (Docker Desktop, `uname -m` = `aarch64`): `cd cluster && docker compose up -d --build && ./verify_qpu.sh && cd .. && jobs/verify_aer.sh`. `verify_qpu.sh` gave 2 RUNNING, 1 PENDING (Resources), and `verify_aer.sh` passed with `GRES=qpu(CNT:1)` captured on c1 and c2. Outputs are in `jobs/results/aarch64/`.
+**aarch64 (M1) run.** The same commands passed on the M1 Mac (Docker Desktop, `uname -m` = `aarch64`): `cd cluster && docker compose up -d --build && ./verify_qpu.sh && cd .. && jobs/verify_aer.sh`. `verify_qpu.sh` gave 2 RUNNING, 1 PENDING (Resources), and `verify_aer.sh` passed with `GRES=qpu(CNT:1)` captured on c1 and c2. Run 2 (jobs 6 and 7), after `docker cp --quiet` was added, passed the same way. Outputs for both runs are in `jobs/results/aarch64/`.
 
-| Simulated, Docker cluster | aarch64 (M1) | x86_64 (Linux) |
-|---|---|---|
-| Bell counts (4096 shots, seed 1234) | `{"00": 2074, "11": 2022}` | `{"00": 2074, "11": 2022}` |
-| VQE iterations | 30 | 30 |
-| Σ quantum_s | 0.1371 s | 0.1283 s |
-| Σ classical_s | 0.0826 s | 0.0547 s |
-| Quantum fraction | 0.624 | 0.701 |
-| setup_s | 3.681 s | 0.963 s |
-| Total wall (script) | 3.902 s | 1.146 s |
-| Queue wait (sacct, UTC) | aer_bell 0 s, vqe_toy 1 s | aer_bell 0 s, vqe_toy 2 s |
-| sacct Elapsed | 4 s, 4 s | 1 s, 1 s |
+| Simulated, Docker cluster | aarch64 run 1 (jobs 4, 5) | aarch64 run 2 (jobs 6, 7) | x86_64 (Linux) |
+|---|---|---|---|
+| Bell counts (4096 shots, seed 1234) | `{"00": 2074, "11": 2022}` | `{"00": 2074, "11": 2022}` | `{"00": 2074, "11": 2022}` |
+| VQE iterations | 30 | 30 | 30 |
+| Σ quantum_s | 0.1371 s | 0.0989 s | 0.1283 s |
+| Σ classical_s | 0.0826 s | 0.0528 s | 0.0547 s |
+| Quantum fraction | 0.624 | 0.652 | 0.701 |
+| setup_s | 3.681 s | 2.261 s | 0.963 s |
+| Total wall (script) | 3.902 s | 2.413 s | 1.146 s |
+| Queue wait (sacct, UTC) | aer_bell 0 s, vqe_toy 1 s | 0 s, 0 s | aer_bell 0 s, vqe_toy 2 s |
+| sacct Elapsed | 4 s, 4 s | 2 s, 3 s | 1 s, 1 s |
 
 - The Bell counts are identical across architectures with the same seed.
-- The VQE final energy differs slightly (−1.3568 vs −1.3487) with identical seeds and pins, so the optimizer's path isn't bit-reproducible across architectures. That's a reproducibility note about this setup, not a physics result.
-- Setup is about 4× slower on the M1. These are different machines and different Docker VMs, so this isn't a chip comparison. The quantum fraction lands in the same 0.62–0.70 range on both.
+- The VQE final energy is bit-identical between the two aarch64 runs (−1.3567740895783653), but differs slightly on x86_64 (−1.3487) with identical seeds and pins. So the optimizer's path reproduces exactly on the same architecture but not across architectures. That's a reproducibility note about this setup, not a physics result.
+- Setup varies a lot from run to run on the same M1 (3.7 s vs 2.3 s), and it's slower than on x86_64. These are different machines and different Docker VMs, so this isn't a chip comparison. The quantum fraction lands in the same 0.62–0.70 range everywhere.
 - On macOS, `wc -l` pads its count with spaces (`RUNNING=       2`). `verify_qpu.sh` now strips the padding (cosmetic; the numeric check already worked).
 
 **Where QRMI acquire/release would sit in this job** (if it ran under the QRMI SPANK plugin, spank-plugins@3455388):
