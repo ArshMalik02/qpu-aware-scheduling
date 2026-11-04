@@ -1,0 +1,16 @@
+# Full pip freeze from the cluster image (Python 3.12, Rocky 9), used with
+#   pip install -r requirements-jobs.txt -c constraints-jobs.txt
+# so transitive dependencies are pinned too. setuptools comes from the
+# python3.12-setuptools RPM; it's listed so the constraint matches what's installed.
+dill==0.4.1
+numpy==2.5.4
+psutil==7.2.2
+python-dateutil==4.0.0
+qiskit==2.6.1
+qiskit-aer==0.18.2
+rustworkx==0.18.1
+scipy==1.18.1
+setuptools==68.2.2
+stevedore==5.9.1
+typing_extensions==4.16.0
+tzdata==2026.6

@@ -1,0 +1,17 @@
+{
+  "counts": {
+    "00": 2074,
+    "11": 2022
+  },
+  "shots": 4096,
+  "seed_simulator": 1234,
+  "qiskit": "2.6.1",
+  "qiskit_aer": "0.18.2",
+  "hostname": "c1",
+  "arch": "x86_64",
+  "SLURM_JOB_ID": "6",
+  "slurm_gres_env": {},
+  "wall_s": 0.5373,
+  "backend": "AerSimulator (CPU)",
+  "simulated": true
+}

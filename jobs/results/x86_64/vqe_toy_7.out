@@ -1,0 +1,22 @@
+host=c1 arch=x86_64 job=7
+{
+  "iterations": 30,
+  "final_energy": -1.3487174029047106,
+  "energy_finite": true,
+  "sum_quantum_s": 0.128257,
+  "sum_classical_s": 0.054673,
+  "quantum_frac": 0.7011,
+  "setup_s": 0.9627,
+  "total_wall_s": 1.1463,
+  "optimizer": "COBYLA maxiter=30",
+  "hamiltonian": "toy: ZZ + 0.5*XI + 0.5*IX",
+  "qiskit": "2.6.1",
+  "qiskit_aer": "0.18.2",
+  "numpy": "2.5.4",
+  "scipy": "1.18.1",
+  "hostname": "c1",
+  "arch": "x86_64",
+  "SLURM_JOB_ID": "7",
+  "backend": "AerSimulator (CPU)",
+  "simulated": true
+}

@@ -38,7 +38,7 @@ sleep 8
 echo "==> squeue"
 ctl squeue -o "%.8i %.4j %.9T %.12R %N"
 
-running=$(ctl squeue -h -t RUNNING -o %i | wc -l)
+running=$(ctl squeue -h -t RUNNING -o %i | wc -l | tr -d " ")   # macOS wc pads with spaces
 pending=$(ctl squeue -h -t PENDING -o %r | grep -c Resources || true)
 echo "==> RUNNING=$running PENDING(Resources)=$pending"
 
