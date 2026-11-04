@@ -1,0 +1,18 @@
+host=c1 arch=aarch64 job=6
+{
+  "counts": {
+    "00": 2074,
+    "11": 2022
+  },
+  "shots": 4096,
+  "seed_simulator": 1234,
+  "qiskit": "2.6.1",
+  "qiskit_aer": "0.18.2",
+  "hostname": "c1",
+  "arch": "aarch64",
+  "SLURM_JOB_ID": "6",
+  "slurm_gres_env": {},
+  "wall_s": 1.5305,
+  "backend": "AerSimulator (CPU)",
+  "simulated": true
+}

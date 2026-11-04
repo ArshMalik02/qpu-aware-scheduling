@@ -1,0 +1,21 @@
+{
+  "iterations": 30,
+  "final_energy": -1.3567740895783653,
+  "energy_finite": true,
+  "sum_quantum_s": 0.098924,
+  "sum_classical_s": 0.052835,
+  "quantum_frac": 0.6518,
+  "setup_s": 2.2607,
+  "total_wall_s": 2.413,
+  "optimizer": "COBYLA maxiter=30",
+  "hamiltonian": "toy: ZZ + 0.5*XI + 0.5*IX",
+  "qiskit": "2.6.1",
+  "qiskit_aer": "0.18.2",
+  "numpy": "2.5.4",
+  "scipy": "1.18.1",
+  "hostname": "c2",
+  "arch": "aarch64",
+  "SLURM_JOB_ID": "7",
+  "backend": "AerSimulator (CPU)",
+  "simulated": true
+}
