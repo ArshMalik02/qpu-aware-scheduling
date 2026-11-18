@@ -1,0 +1,2 @@
+# Dev-only: plotting for plot_timeline.py. The feed itself is stdlib-only.
+matplotlib==3.11.2

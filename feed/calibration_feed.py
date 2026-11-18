@@ -66,6 +66,8 @@ class FeedConfig:
     t1_us: float = 250.0
     readout_err: float = 0.012
     gate_err_1q: float = 2.5e-4
+    # Capacity reported in the QRMI-shaped fields (max_slots / available_slots).
+    slots: int = 1
 
 
 @dataclass(frozen=True)
@@ -197,9 +199,22 @@ def qpu_state(cfg: FeedConfig, qpu: str, t: datetime) -> dict:
     n = _rng(cfg, qpu, "noise", tick)
 
     quality = math.exp(0.15 * z)  # >1 means worse than baseline
-    t1 = cfg.t1_us / quality * math.exp(-0.02 * age_h) * (1 + n.gauss(0, 0.01))
-    readout = cfg.readout_err * quality * (1 + 0.03 * age_h) * (1 + n.gauss(0, 0.02))
-    gate = cfg.gate_err_1q * quality * (1 + 0.05 * age_h) * (1 + n.gauss(0, 0.02))
+    t1_drift = 1 - math.exp(-0.02 * age_h)  # fractional T1 loss since last recal
+    readout_drift = 0.03 * age_h            # fractional readout-error growth
+    gate_drift = 0.05 * age_h               # fractional 1q-gate-error growth
+    t1 = cfg.t1_us / quality * (1 - t1_drift) * (1 + n.gauss(0, 0.01))
+    readout = cfg.readout_err * quality * (1 + readout_drift) * (1 + n.gauss(0, 0.02))
+    gate = cfg.gate_err_1q * quality * (1 + gate_drift) * (1 + n.gauss(0, 0.02))
+    # ASSUMED summary: mean fractional degradation of the three metrics versus their
+    # noise-free post-recal values. 0 right after a recal, rising with time since it.
+    # It is a deterministic function of time since the last recalibration and carries no
+    # information beyond that: it does not reflect day-to-day calibration quality (the
+    # AR(1) factor above). Policies that need quality should read metrics{} directly.
+    drift_score = (t1_drift + readout_drift + gate_drift) / 3
+
+    # QRMI ResourceStatus-shaped fields (what the Slurm HRES plugin consumes).
+    healthy = status != "offline"
+    available = cfg.slots if status == "online" else 0
 
     return {
         "id": qpu,
@@ -215,6 +230,17 @@ def qpu_state(cfg: FeedConfig, qpu: str, t: datetime) -> dict:
             "readout_err": round(readout, 5),
             "gate_err_1q": round(gate, 7),
         },
+        "drift_score": round(drift_score, 4),
+        # QRMI ResourceStatus shape (qrmi src/models/resource_status.rs). busy is always
+        # False and pending_job_count None: the feed doesn't track jobs or queues.
+        "healthy": healthy,
+        "busy": False,
+        "capacity": {"available_slots": available, "max_slots": cfg.slots},
+        "pending_job_count": None,
+        # Flat copies matching the HRES plugin's status cache keys (qrmi_hres.lua).
+        "available": available,
+        "max": cfg.slots,
+        "reason": reason,
         "updated_at": _iso(t),
         "simulated": True,
     }
@@ -290,6 +316,8 @@ def main(argv: list[str] | None = None) -> None:
     p = argparse.ArgumentParser(description="Simulated QPU calibration feed (all data is fake).")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--qpus", type=int, default=2, help="number of QPUs (default 2, one per Slurm node)")
+    p.add_argument("--slots", type=int, default=FeedConfig.slots,
+                   help="capacity per QPU reported as max_slots / available_slots (default 1)")
     p.add_argument("--host", default="127.0.0.1")
     p.add_argument("--port", type=int, default=8787)
     p.add_argument("--epoch", default=_iso(FeedConfig.epoch),
@@ -303,7 +331,7 @@ def main(argv: list[str] | None = None) -> None:
     a = p.parse_args(argv)
 
     cfg = FeedConfig(
-        seed=a.seed, n_qpus=a.qpus, epoch=parse_time(a.epoch), speed=a.speed,
+        seed=a.seed, n_qpus=a.qpus, slots=a.slots, epoch=parse_time(a.epoch), speed=a.speed,
         quick_recal_min=a.quick_recal_min, full_recal_min=a.full_recal_min, day_phi=a.day_phi,
     )
     server = ThreadingHTTPServer((a.host, a.port), make_handler(cfg, SimClock(cfg)))
