@@ -99,6 +99,12 @@ Overlap times have 1 s resolution (sacct).
   it retries every 5 s without delaying other jobs, logs `submit_delay_s` and `rejected_attempts` in
   `submitted.log`, and `summarize.py` adds the delay to the job's QPU wait. With feed seed 42 this
   happens while the two daily full recals overlap (about 03:50–04:10 feed time).
+- **A QPU job already pending when every QPU goes out gets stuck in `BadConstraints`.** Slurm
+  re-evaluates it against a cluster with no `qpu` configured, marks it `BadConstraints`, and never
+  re-checks it after the QPUs come back: it stays pending until cancelled. HRES has no such state. The
+  loop works around it on every poll where at least one QPU is in: it runs `scontrol hold` +
+  `scontrol release` on such jobs, which makes them re-validate, and logs a `recheck` event in
+  `transitions.log`. `summary.json` lists those jobs as `rechecks_badconstraints`.
 - **No admission check on slots, `busy` or cache age.** HRES checks `available_slots` and holds jobs
   when its cached status is older than `status_max_age`. Here, if the feed is unreachable the loop logs
   the error and keeps the node's last state.
