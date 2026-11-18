@@ -1,0 +1,113 @@
+{
+  "simulated": true,
+  "jobs_by_type": {
+    "qpu": 12,
+    "hybrid": 8,
+    "classical": 15
+  },
+  "states": {
+    "COMPLETED": 35
+  },
+  "qpu_wait": {
+    "qpu": {
+      "n": 12,
+      "mean_s": 21.4,
+      "median_s": 1.5,
+      "p95_s": 85.0,
+      "max_s": 85.0
+    },
+    "hybrid": {
+      "n": 8,
+      "mean_s": 1.4,
+      "median_s": 0.0,
+      "p95_s": 5.0,
+      "max_s": 5.0
+    }
+  },
+  "rejected_at_submit_all_qpus_out": [
+    {
+      "job_id": "40",
+      "name": "hybrid-012",
+      "submit_delay_s": 5.01
+    }
+  ],
+  "classical_queue_wait": {
+    "n": 15,
+    "mean_s": 1.5,
+    "median_s": 0.0,
+    "p95_s": 9.0,
+    "max_s": 9.0
+  },
+  "transitions": {
+    "QPU_OUT": 5,
+    "QPU_IN": 5
+  },
+  "polls": 127,
+  "polls_with_qpu_out": 49,
+  "qpu_job_pending_while_qpu_out": {
+    "count": 24,
+    "first": [
+      {
+        "wall": "2026-11-18T04:14:29Z",
+        "feed_time": "2026-11-01T02:42:46Z",
+        "qpus_out_on": [
+          "c1"
+        ],
+        "job": "33",
+        "name": "qpu-006",
+        "reason": "Resources"
+      },
+      {
+        "wall": "2026-11-18T04:14:39Z",
+        "feed_time": "2026-11-01T02:48:46Z",
+        "qpus_out_on": [
+          "c1"
+        ],
+        "job": "33",
+        "name": "qpu-006",
+        "reason": "Resources"
+      },
+      {
+        "wall": "2026-11-18T04:14:49Z",
+        "feed_time": "2026-11-01T02:54:47Z",
+        "qpus_out_on": [
+          "c1"
+        ],
+        "job": "33",
+        "name": "qpu-006",
+        "reason": "Resources"
+      }
+    ]
+  },
+  "classical_running_on_qpu_out_node": {
+    "count": 3,
+    "first": [
+      {
+        "wall": "2026-11-18T04:18:20Z",
+        "feed_time": "2026-11-01T05:01:08Z",
+        "node": "c2",
+        "job": "43",
+        "name": "classical-015"
+      },
+      {
+        "wall": "2026-11-18T04:18:30Z",
+        "feed_time": "2026-11-01T05:07:09Z",
+        "node": "c2",
+        "job": "43",
+        "name": "classical-015"
+      },
+      {
+        "wall": "2026-11-18T04:18:40Z",
+        "feed_time": "2026-11-01T05:13:10Z",
+        "node": "c2",
+        "job": "43",
+        "name": "classical-015"
+      }
+    ]
+  },
+  "checks": {
+    "1_qpu_taken_out_and_restored": true,
+    "2_qpu_job_pending_while_qpu_out": true,
+    "3_classical_running_on_qpu_out_node": true
+  }
+}

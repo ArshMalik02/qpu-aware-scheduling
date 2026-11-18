@@ -15,6 +15,43 @@ Everything here is **simulated**: the QPUs are Slurm GRES counters, the jobs run
 
 So the DRAIN/RESUME fallback isn't needed, and CPU-only jobs keep running while a QPU is out, which is what HRES does too. Two differences from HRES: the pending reason is `Resources`, not `HRESDisabled`; and because the controller keeps `qpu:0` across slurmd restarts, the loop is the only thing that restores a QPU, so it has to restore every node when it exits.
 
+**The loop and the workload.** `make baseline-reactive SEED=1` does the following:
+- starts the feed as a sidecar (`docker compose --profile reactive`, seed 42, 36× speed, so ~30 min of wall time ≈ 18 h of feed time);
+- runs `policy/reactive.py` in slurmctld: it polls every 10 s and sets `Gres=qpu:0/1` per node, with qpu0→c1 and qpu1→c2;
+- submits `workload/gen.py --seed 1`: 35 jobs over 20 min, 12 QPU-only Bell, 8 hybrid toy-VQE (`-c2`) and 15 classical, each holding its resources for a seeded, *assumed* time;
+- drains the queue, restores the QPUs, and writes everything to `results/reactive/seed1/`.
+
+**What broke:**
+1. *All QPUs out → sbatch rejects QPU jobs.* The first full run died when `sbatch --gres=qpu:1` failed with `Requested node configuration is not available`. That happens while the two daily full recals overlap (feed ≈ 03:55–04:13), because with `qpu:0` on every node, no node is configured for the job at all. HRES would accept the job and hold it with `HRESDisabled`. Fix: `gen.py` retries those jobs every 5 s without delaying other arrivals, logs `submit_delay_s`, and `summarize.py` counts that delay as QPU wait. In the passing run, `hybrid-012` was rejected once and accepted 5 s later.
+
+**Results** (seed 1, x86_64, simulated; times UTC):
+
+| | Value |
+|---|---|
+| Jobs | 35, all COMPLETED |
+| Loop transitions | 5 × QPU_OUT, 5 × QPU_IN, matching the feed's recal windows as seen by the loop, up to one poll late (qpu0 quick 00:00–00:24, full 02:30–04:13, quick 10:14–10:56; qpu1 full 03:55–05:37, quick 11:38–12:20, feed time) |
+| Polls with a QPU out | 49 of 127 |
+| QPU wait, QPU-only jobs | mean 21.4 s, median 1.5 s, p95/max 85 s |
+| QPU wait, hybrid jobs | mean 1.4 s, max 5 s (the one submit rejection) |
+| Classical queue wait | mean 1.5 s, max 9 s |
+| Checks | QPU taken out and restored ✔; QPU job PENDING while a QPU was out ✔ (24 polls); classical job RUNNING on a node whose QPU was out ✔ |
+
+Excerpt: c1's QPU went out at feed 02:30 for the full recal, and `qpu-006` then pended while c2's QPU was busy:
+
+```
+[04:14:09Z] feed=2026-11-01T02:30:43Z c1/qpu0 QPU_OUT qpu:1->0 (paused: full recalibration in progress (simulated))
+queue.log 04:14:29Z feed 02:42:46  qpus {c1: 0, c2: 1}
+  33|qpu-006|PENDING|Resources|gres/qpu:1|
+  32|qpu-005|RUNNING|None|gres/qpu:1|c2
+jobs.csv: qpu-006 submit 04:14:20, start 04:15:01 on c2 → QPU wait 41 s
+```
+
+**Not like HRES:** the pending reason is `Resources`, not `HRESDisabled`; when every QPU is out, jobs are rejected at submit (above) instead of held; there's no admission check on slots, `busy` or status age; there's up to one poll (10 s ≈ 6 min of feed time) of lag each way; and nothing restores a QPU except the loop.
+
+**Takeaway:** taking the QPU out by GRES count gives the HRES effect on 26.05.2 (QPU jobs wait, CPU work continues) for 49 of 127 polls in this run. The wait lands on QPU-only jobs (p95 85 s, simulated), and the one case HRES handles better is when every QPU is out at once.
+
+**Next:** policy 1 (static) and policy 3 (simple predictive) on the same seeded workload, then the comparison table (3 seeds).
+
 ## 2026-11-03: Aer job through --gres=qpu:1 + toy VQE timing
 
 **Setup:** the Docker cluster from `cluster/` (Slurm 26.05.2, nodes c1 and c2, each with `qpu:1`), run on **x86_64** Linux. Qiskit 2.6.1, qiskit-aer 0.18.2, numpy 2.5.4 and scipy 1.18.1 are baked into the image from wheels: `cluster/requirements-jobs.txt`, plus `cluster/constraints-jobs.txt` (the `pip freeze`) passed with `-c` so transitive dependencies are pinned too. Two batch jobs (`jobs/`), each with `--gres=qpu:1 -c1 --mem=500M`, were submitted together by `jobs/verify_aer.sh`. Everything is **simulated**: Aer on CPU, and the `qpu` GRES is a counter.
