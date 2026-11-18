@@ -41,9 +41,15 @@ docker cp --quiet policy slurmctld:/data/
 docker cp --quiet workload slurmctld:/data/
 ctl rm -rf /data/jobs/results
 start_utc=$(ctl date -u +%Y-%m-%dT%H:%M:%S)
+INTERVAL_S=10
 
-echo "==> Starting the reactive loop (poll 10 s, qpu0->c1, qpu1->c2)"
-ctl bash -c "nohup python3 /data/policy/reactive.py --out-dir $RUN > $RUN/loop.out 2>&1 &"
+# Run config: summarize.py reads feed_speed from here to convert wall seconds to feed minutes.
+printf '{"seed": %s, "feed_seed": %s, "feed_speed": %s, "run_min": %s, "rate_per_min": %s, "poll_interval_s": %s, "map": "qpu0=c1,qpu1=c2", "start_utc": "%s", "simulated": true}\n' \
+    "$SEED" "$FEED_SEED" "$FEED_SPEED" "$RUN_MIN" "$RATE_PER_MIN" "$INTERVAL_S" "$start_utc" \
+    | docker exec -i slurmctld tee "$RUN/run_config.json" >/dev/null
+
+echo "==> Starting the reactive loop (poll ${INTERVAL_S} s, qpu0->c1, qpu1->c2)"
+ctl bash -c "nohup python3 /data/policy/reactive.py --interval $INTERVAL_S --out-dir $RUN > $RUN/loop.out 2>&1 &"
 trap 'stop_loop' EXIT
 
 echo "==> Submitting the seeded workload (seed $SEED, ${RUN_MIN} min, ${RATE_PER_MIN}/min)"
@@ -76,7 +82,7 @@ ctl python3 /data/policy/summarize.py --run-dir "$RUN" || status=$?
 
 echo "==> Copying results to $DEST/"
 rm -rf "$DEST" && mkdir -p "$DEST"
-for f in manifest.json submitted.log transitions.log queue.log loop.out sacct.txt jobs.csv summary.json; do
+for f in run_config.json manifest.json submitted.log transitions.log queue.log loop.out sacct.txt jobs.csv summary.json; do
     docker cp --quiet "slurmctld:$RUN/$f" "$DEST/$f"
 done
 echo "    copied to $DEST/"

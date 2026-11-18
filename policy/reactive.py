@@ -73,6 +73,10 @@ class Loop:
         self.feed = a.feed.rstrip("/")
         self.mapping = dict(p.split("=") for p in a.map.split(","))
         self.interval = a.interval
+        # --observe-only: log the same transitions/queue snapshots but never call scontrol.
+        # Lets other policies (e.g. static) record QPU_OUT/QPU_IN identically for comparison.
+        self.observe_only = a.observe_only
+        self.shadow: dict[str, int] = {}
         self.deadline = time.monotonic() + a.duration_s if a.duration_s else None
         out = Path(a.out_dir)
         out.mkdir(parents=True, exist_ok=True)
@@ -104,16 +108,21 @@ class Loop:
                 continue
             feed_time = st.get("updated_at")
             want = 1 if (st.get("status") == "online" and st.get("healthy") is not False) else 0
-            have = node_qpus(node)
+            have = self.shadow.get(node, 1) if self.observe_only else node_qpus(node)
             if want != have:
-                set_qpus(node, want)
+                if self.observe_only:
+                    self.shadow[node] = want
+                else:
+                    set_qpus(node, want)
                 self.log_transition(node, qpu, have, want, st,
                                     f"{st.get('status')}: {st.get('status_reason')}")
-            counts[node] = want
+            counts[node] = want if not self.observe_only else node_qpus(node)
         self.qlog.write(json.dumps({"wall": wall(), "feed_time": feed_time, "qpus": counts,
                                     "queue": queue_snapshot()}) + "\n")
 
     def restore_all(self) -> None:
+        if self.observe_only:
+            return
         for qpu, node in self.mapping.items():
             have = node_qpus(node)
             if have != 1:
@@ -145,6 +154,8 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--interval", type=float, default=10.0, help="poll seconds (HRES example: 10)")
     p.add_argument("--duration-s", type=float, default=0, help="stop after N seconds (0 = until signalled)")
     p.add_argument("--out-dir", default="/data/results/reactive")
+    p.add_argument("--observe-only", action="store_true",
+                   help="log feed transitions without changing any node (for non-reactive policies)")
     a = p.parse_args(argv)
     Loop(a).run()
 

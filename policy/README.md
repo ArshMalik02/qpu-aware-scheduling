@@ -54,7 +54,35 @@ node to `qpu:1`, because the controller keeps `qpu:0` across slurmd restarts.
 | `queue.log` | one JSON line per poll: each node's qpu count + the `squeue` snapshot |
 | `sacct.txt` | `sacct -X -P` for the run |
 | `jobs.csv` | per job: submit, start, end (UTC), queue wait; QPU wait for QPU/hybrid jobs |
-| `summary.json` | counts, wait statistics, and the three checks below |
+| `run_config.json` | seed, feed seed, **feed speed**, run length, arrival rate, poll interval, start time |
+| `summary.json` | counts, waits (wall s and feed min), recal overlap, and the three checks below |
+
+## Units
+
+Hold times and waits are **wall-clock seconds**. The feed runs at `FEED_SPEED` simulated seconds per
+wall second, so `summarize.py` reports every wait and overlap twice: `wall_s` and
+`feed_min = wall_s × feed_speed / 60`. It reads `feed_speed` from `run_config.json`, so a run at a
+different speed is converted correctly. The workload's hold times (`MEAN_HOLD_S` in
+`../workload/gen.py`: QPU 45 s, hybrid 90 s, classical 60 s, capped at 240 s) are **assumed** and
+given in wall seconds. At the default 36× speed a 45 s hold is 27 feed minutes, so changing
+`FEED_SPEED` changes how long jobs are relative to the recal windows.
+
+## Recal overlap (the cross-policy metric)
+
+`recal_overlap()` in `summarize.py` counts the QPU and hybrid jobs that were **RUNNING on a node at the
+moment its QPU went out** (a `QPU_OUT` in `transitions.log`). For each one it measures the overlap,
+`min(job end, next QPU_IN on that node) − QPU_OUT time`, in wall seconds and feed minutes. That's how
+long the job kept using a QPU the feed said was recalibrating. A reactive policy can't avoid this,
+since it only reacts once the recal has started. It's the number a predictive policy should bring
+down.
+
+The metric needs only `jobs.csv` and `transitions.log`, so it's computed the same way for every
+policy. For a policy that doesn't take QPUs out (e.g. static), run the loop with
+`reactive.py --observe-only`. It polls the feed on the same 10 s cycle and writes the same
+`QPU_OUT`/`QPU_IN` events, without calling `scontrol`, so the event times carry the same poll lag.
+Overlap times have 1 s resolution (sacct).
+
+## Checks
 
 `summarize.py` prints PASS only if all three hold:
 1. the loop took a QPU out and restored it

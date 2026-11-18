@@ -7,7 +7,8 @@ SEED ?= 1
 baseline-reactive:
 	SEED=$(SEED) policy/run_baseline_reactive.sh
 
-## Unit tests (feed + workload generator)
+## Unit tests (feed, workload generator, policy summary)
 test:
 	cd feed && python3 -m unittest -q
 	cd workload && python3 -m unittest -q
+	cd policy && python3 -m unittest -q
