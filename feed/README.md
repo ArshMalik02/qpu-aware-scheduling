@@ -38,6 +38,17 @@ The example below is `--seed 42`, `GET /qpus/qpu0/state?at=2026-11-03T10:00:00Z`
     "readout_err": 0.01647,
     "gate_err_1q": 0.0003861
   },
+  "drift_score": 0.1884,
+  "healthy": true,
+  "busy": false,
+  "capacity": {
+    "available_slots": 1,
+    "max_slots": 1
+  },
+  "pending_job_count": null,
+  "available": 1,
+  "max": 1,
+  "reason": "calibrated (simulated)",
   "updated_at": "2026-11-03T10:00:00Z",
   "simulated": true
 }
@@ -45,6 +56,47 @@ The example below is `--seed 42`, `GET /qpus/qpu0/state?at=2026-11-03T10:00:00Z`
 
 `status` is `online`, `paused` (a recalibration is running) or `offline` (a maintenance window).
 Metrics are QPU-level medians across qubits.
+
+### QRMI / Slurm HRES fields
+
+The feed also returns QRMI's `ResourceStatus` shape, which the Slurm 26.11 HRES plugin reads through
+QRMI `status()`. That way a thin QRMI shim can hand the feed's state straight to the plugin later.
+
+| Field | Value in the feed | Source of the name |
+|---|---|---|
+| `status`, `status_reason` | as above (`online` / `paused` / `offline`) | QRMI `ResourceStatus` |
+| `healthy` | `false` only while `offline`; `true` while `paused` (healthy but recalibrating) | QRMI `ResourceStatus` |
+| `busy` | always `false`: the feed doesn't track jobs | QRMI `ResourceStatus` |
+| `capacity.available_slots` / `capacity.max_slots` | `max_slots` = `--slots` (default 1); `available_slots` = `max_slots` while `online`, else 0 | QRMI `ResourceCapacity` |
+| `pending_job_count` | always `null`: the feed doesn't track queues | QRMI `ResourceStatus` |
+| `available`, `max`, `reason` | flat copies of `capacity.available_slots`, `capacity.max_slots`, `status_reason` | HRES plugin status-cache keys |
+| `drift_score` | see below (*assumed*) | this feed |
+
+Sources:
+- QRMI `src/models/resource_status.rs` L26–31 and L72–89 at
+  [`qiskit-community/qrmi@8713bd0`](https://github.com/qiskit-community/qrmi/blob/8713bd0/src/models/resource_status.rs#L72-L89)
+- `containers/qrmi_hres.lua` at
+  [`qrmi-community/slurm-hres-plugins@b24bc7a`](https://github.com/qrmi-community/slurm-hres-plugins/blob/b24bc7a/containers/qrmi_hres.lua)
+
+Mapping notes (from the plugin source; not run against Slurm here):
+- `write_status` (L611–620) reads `st.healthy`, `st.busy`, `st.capacity.available_slots` and
+  `st.capacity.max_slots`. It writes them to a cache file as `healthy`, `busy`, `available`, `max` and
+  `reason`, plus its own `time`. The cached `reason` is built from `status` + `status_reason` (L862),
+  so the flat fields here are copies for convenience; the plugin itself needs the nested QRMI shape.
+- The admission check (L899–931) holds a job unless `status == "online"`, `healthy ~= false`,
+  `busy ~= true`, and the requested slots fit in `available`. It disables the layer (pending reason
+  `HRESDisabled`) only while `status ~= "online"` or `healthy == false` (L55–56, L871). So a feed
+  `paused` window disables the QPU, and `offline` does too.
+- `time` is the plugin's own cache timestamp (`os.time()`). It's checked against `status_max_age`, so
+  the feed has no equivalent. The feed's `updated_at` is simulated time, not wall time.
+
+### `drift_score` (*assumed*)
+
+The mean fractional degradation of the three metrics versus their noise-free post-recal values:
+`(T1 loss + readout-error growth + 1q-gate-error growth) / 3`, with the *assumed* within-day rates
+below. It's 0 when a recalibration ends and rises with time since then. It keeps rising during a
+recal window, until the recal finishes. It's a convenience summary for plots and policies, not a
+quantity from any paper or device.
 
 ## Reproducibility
 
@@ -80,12 +132,26 @@ Only the recal durations and the day-to-day correlation come from a source. Ever
 - Mansfield et al., [arXiv:2509.12949](https://arxiv.org/abs/2509.12949): quick (40 min) and full (100 min) recalibration durations.
 - Deng, Schulz & Schulz, [arXiv:2508.21231](https://arxiv.org/abs/2508.21231): day-to-day lag-1 autocorrelation of calibration metrics (0.10–0.20).
 
+## 24 h timeline plot
+
+```bash
+python3 -m pip install -r feed/requirements-dev.txt   # matplotlib, dev-only
+python3 feed/plot_timeline.py                          # seed 42, 24 h, 1-min steps
+```
+
+Calls `qpu_state()` directly (no server) for qpu0 and qpu1 and writes
+[`results/timeline_seed42.csv`](results/timeline_seed42.csv) and
+[`results/timeline_seed42.png`](results/timeline_seed42.png): status bands, readout error and
+`drift_score`. **Simulated; within-day drift rates assumed.** With seed 42 the first 24 h have no
+`offline` window (outages are a 5 %/day assumption). Re-running gives a byte-identical CSV.
+
 ## Tests
 
 ```bash
 cd feed && python3 -m unittest -v
 ```
 
-The tests cover seed reproducibility, change over time, the response schema, recal durations and
+The tests cover the QRMI/HRES fields (`available == 0` unless online, `healthy` false only when
+offline, `--slots`, `drift_score` resets at each recal end, identical JSON for the same seed), seed reproducibility, change over time, the response schema, recal durations and
 `paused` status, `next_recal` always in the future, a sample lag-1 ACF of 0.15 ± 0.06 over 3000
 simulated days, and the HTTP endpoints.
