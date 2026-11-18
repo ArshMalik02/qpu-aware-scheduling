@@ -1,3 +1,20 @@
+## 2026-11-18: Reactive up/down loop (HRES-like) on 26.05.2
+
+Everything here is **simulated**: the QPUs are Slurm GRES counters, the jobs run on Aer (CPU), and QPU state comes from the simulated feed.
+
+**Step 3: can a node's QPU be taken out without draining the node?** Tested on the `cluster/` setup (Slurm 26.05.2, dynamic nodes registered with `--conf "Gres=qpu:1"`, no `gres.conf`). **Yes: `scontrol update NodeName=c1 Gres=qpu:0` works, and so does restoring with `Gres=qpu:1`.**
+
+| Check | Result |
+|---|---|
+| `scontrol update NodeName=c1 Gres=qpu:0` | rc 0; `sinfo` shows `c1 qpu:0`, node state unchanged (`IDLE+DYNAMIC_NORM`) |
+| QPU job submitted while c1 = `qpu:0` and c2's QPU busy | PENDING, reason `Resources` |
+| CPU-only job on c1 at the same time | RUNNING: removing the QPU doesn't block CPU work |
+| `scontrol update NodeName=c1 Gres=qpu:1` | rc 0; the pending QPU job started on c1 within one scheduling pass |
+| `qpu:0` while a QPU job is *running* on c1 | Accepted. The running job isn't touched and completed normally (`COMPLETED 0:0`); c1 stays `qpu:0` |
+| slurmd restart on c1 while at `qpu:0` | c1 **stays** `qpu:0`: the controller keeps its stored value over the node's `--conf` (same behavior as the 2026-10-26 stale-record bug) |
+
+So the DRAIN/RESUME fallback isn't needed, and CPU-only jobs keep running while a QPU is out, which is what HRES does too. Two differences from HRES: the pending reason is `Resources`, not `HRESDisabled`; and because the controller keeps `qpu:0` across slurmd restarts, the loop is the only thing that restores a QPU, so it has to restore every node when it exits.
+
 ## 2026-11-03: Aer job through --gres=qpu:1 + toy VQE timing
 
 **Setup:** the Docker cluster from `cluster/` (Slurm 26.05.2, nodes c1 and c2, each with `qpu:1`), run on **x86_64** Linux. Qiskit 2.6.1, qiskit-aer 0.18.2, numpy 2.5.4 and scipy 1.18.1 are baked into the image from wheels: `cluster/requirements-jobs.txt`, plus `cluster/constraints-jobs.txt` (the `pip freeze`) passed with `-c` so transitive dependencies are pinned too. Two batch jobs (`jobs/`), each with `--gres=qpu:1 -c1 --mem=500M`, were submitted together by `jobs/verify_aer.sh`. Everything is **simulated**: Aer on CPU, and the `qpu` GRES is a counter.
