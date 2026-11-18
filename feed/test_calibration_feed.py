@@ -65,6 +65,73 @@ class ModelTests(unittest.TestCase):
             f.qpu_state(self.cfg, "qpu99", self.t0)
 
 
+
+class HresShapeTests(unittest.TestCase):
+    """QRMI ResourceStatus / HRES-plugin fields added in Week 3."""
+
+    cfg = f.FeedConfig(seed=7)
+
+    def sweep(self, cfg, days=3, step_min=5):
+        t = f.FeedConfig.epoch
+        for i in range(days * 24 * 60 // step_min):
+            for q in f.qpu_ids(cfg):
+                yield q, f.qpu_state(cfg, q, t + timedelta(minutes=i * step_min))
+
+    def test_new_fields_present_and_typed(self):
+        s = f.qpu_state(self.cfg, "qpu0", ModelTests.t0)
+        self.assertIsInstance(s["healthy"], bool)
+        self.assertIs(s["busy"], False)
+        self.assertEqual(set(s["capacity"]), {"available_slots", "max_slots"})
+        self.assertIsNone(s["pending_job_count"])
+        for k in ("available", "max", "reason", "drift_score"):
+            self.assertIn(k, s)
+        self.assertEqual(s["reason"], s["status_reason"])
+        self.assertEqual(s["available"], s["capacity"]["available_slots"])
+        self.assertEqual(s["max"], s["capacity"]["max_slots"])
+
+    def test_available_zero_unless_online(self):
+        seen = set()
+        for _, s in self.sweep(self.cfg):
+            seen.add(s["status"])
+            if s["status"] == "online":
+                self.assertEqual(s["available"], s["max"])
+            else:
+                self.assertEqual(s["available"], 0)
+        self.assertIn("paused", seen)
+
+    def test_healthy_false_only_when_offline(self):
+        # Seed-independent: find an offline window by scanning maintenance windows.
+        cfg = f.FeedConfig(seed=7, p_offline_per_day=1.0)
+        offline = 0
+        for _, s in self.sweep(cfg, days=2):
+            self.assertEqual(s["healthy"], s["status"] != "offline")
+            offline += s["status"] == "offline"
+        self.assertGreater(offline, 0)
+
+    def test_slots_flag(self):
+        cfg = f.FeedConfig(seed=7, slots=4)
+        states = [s for _, s in self.sweep(cfg, days=1, step_min=30)]
+        self.assertTrue(all(s["max"] == 4 for s in states))
+        self.assertTrue(any(s["available"] == 4 for s in states))
+
+    def test_drift_score_resets_after_each_recal(self):
+        for day in range(3):
+            for w in f._day_windows(self.cfg, "qpu1", day):
+                if w.kind == "maintenance":
+                    continue
+                at_end = f.qpu_state(self.cfg, "qpu1", w.end)["drift_score"]
+                before_end = f.qpu_state(self.cfg, "qpu1", w.end - timedelta(minutes=1))["drift_score"]
+                later = f.qpu_state(self.cfg, "qpu1", w.end + timedelta(hours=2))["drift_score"]
+                self.assertEqual(at_end, 0.0)
+                self.assertLess(at_end, later)
+                if day > 0 or w.kind == "quick":  # a previous recal exists to drift from
+                    self.assertGreater(before_end, 0.0)
+
+    def test_same_seed_identical_json(self):
+        a = [json.dumps(s, sort_keys=True) for _, s in self.sweep(f.FeedConfig(seed=11), days=1, step_min=17)]
+        b = [json.dumps(s, sort_keys=True) for _, s in self.sweep(f.FeedConfig(seed=11), days=1, step_min=17)]
+        self.assertEqual(a, b)
+
 class HttpTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
