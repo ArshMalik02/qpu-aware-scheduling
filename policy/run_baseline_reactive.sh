@@ -33,6 +33,23 @@ for _ in $(seq 1 30); do
     sleep 2
 done
 
+echo "==> Preflight: c1 and c2 must be up"
+# After a Docker restart slurmctld marks the nodes DOWN ("Node unexpectedly rebooted")
+# and every job would sit in ReqNodeNotAvail. Resume once, then require idle/mixed/alloc.
+down=$(ctl sinfo -h -N -n c1,c2 -t down,drain,fail,unknown -o "%N" | sort -u | tr '\n' ' ')
+if [ -n "$down" ]; then
+    echo "    nodes not up: $down; trying State=RESUME"
+    for n in $down; do ctl scontrol update NodeName="$n" State=RESUME || true; done
+    sleep 5
+fi
+bad=$(ctl sinfo -h -N -n c1,c2 -t down,drain,fail,unknown -o "%N %T %E" | sort -u)
+if [ -n "$bad" ]; then
+    echo "FAIL: nodes still not up, not starting the run:" >&2
+    echo "$bad" >&2
+    exit 1
+fi
+ctl sinfo -N -n c1,c2 -o "    %N %G %t"
+
 echo "==> Staging jobs/, policy/, workload/ into slurmctld:/data"
 stop_loop
 ctl rm -rf "$RUN" && ctl mkdir -p "$RUN" /data/jobs

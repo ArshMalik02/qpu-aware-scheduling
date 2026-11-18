@@ -7,9 +7,10 @@ Reads, from --run-dir:
   submitted.log     one line per submitted job (gen.py)
   transitions.log   QPU_OUT / QPU_IN events per node (reactive.py, or reactive.py --observe-only)
   queue.log         one squeue snapshot per poll
-Writes jobs.csv and summary.json, prints the key numbers and three checks:
+Writes jobs.csv and summary.json, prints the key numbers and four checks:
+  0. every submitted job COMPLETED (so a run where nothing executed can't pass)
   1. the loop took a QPU out and restored it (QPU_OUT and QPU_IN transitions)
-  2. a QPU job was PENDING at a poll where some node's QPU was out
+  2. a QPU job was PENDING (reason Resources) at a poll where some node's QPU was out
   3. a classical job was RUNNING on a node whose QPU was out at that poll
 
 Units: hold times and waits are wall seconds; the feed runs at feed_speed simulated
@@ -140,7 +141,9 @@ def main(argv: list[str] | None = None) -> int:
             continue
         for line in p["queue"]:
             jid, name, state, reason, gres, node = (line.split("|") + [""] * 6)[:6]
-            if state == "PENDING" and "qpu" in gres:
+            # Only "Resources": that's what a missing qpu GRES produces. Other reasons
+            # (e.g. ReqNodeNotAvail when nodes are down) aren't caused by the loop.
+            if state == "PENDING" and "qpu" in gres and reason == "Resources":
                 pending_examples.append({"wall": p["wall"], "feed_time": p["feed_time"],
                                          "qpus_out_on": sorted(out_nodes), "job": jid,
                                          "name": name, "reason": reason})
@@ -169,6 +172,7 @@ def main(argv: list[str] | None = None) -> int:
         "classical_running_on_qpu_out_node": {"count": len(running_examples), "first": running_examples[:3]},
     }
     checks = {
+        "0_all_jobs_completed": bool(jobs) and all(j["state"] == "COMPLETED" for j in jobs),
         "1_qpu_taken_out_and_restored": summary["transitions"]["QPU_OUT"] > 0 and summary["transitions"]["QPU_IN"] > 0,
         "2_qpu_job_pending_while_qpu_out": len(pending_examples) > 0,
         "3_classical_running_on_qpu_out_node": len(running_examples) > 0,
