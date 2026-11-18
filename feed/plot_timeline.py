@@ -87,7 +87,7 @@ def plot(rows: list[dict], path: Path, seed: int, hours: int) -> None:
     ax_drift.set_xlim(0, hours)
 
     fig.suptitle(f"Simulated QPU calibration feed, seed {seed}, {hours} h ({CAPTION})")
-    fig.text(0.5, 0.005, f"SIMULATED data from feed/calibration_feed.py; {CAPTION}. "
+    fig.text(0.5, 0.005, "SIMULATED data from feed/calibration_feed.py; within-day drift rates assumed. "
              "Recal durations from Mansfield et al.; day-to-day drift from Deng et al.",
              ha="center", fontsize=7)
     fig.tight_layout(rect=(0, 0.02, 1, 0.96))

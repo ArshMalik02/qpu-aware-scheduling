@@ -207,6 +207,9 @@ def qpu_state(cfg: FeedConfig, qpu: str, t: datetime) -> dict:
     gate = cfg.gate_err_1q * quality * (1 + gate_drift) * (1 + n.gauss(0, 0.02))
     # ASSUMED summary: mean fractional degradation of the three metrics versus their
     # noise-free post-recal values. 0 right after a recal, rising with time since it.
+    # It is a deterministic function of time since the last recalibration and carries no
+    # information beyond that: it does not reflect day-to-day calibration quality (the
+    # AR(1) factor above). Policies that need quality should read metrics{} directly.
     drift_score = (t1_drift + readout_drift + gate_drift) / 3
 
     # QRMI ResourceStatus-shaped fields (what the Slurm HRES plugin consumes).

@@ -96,7 +96,9 @@ The mean fractional degradation of the three metrics versus their noise-free pos
 `(T1 loss + readout-error growth + 1q-gate-error growth) / 3`, with the *assumed* within-day rates
 below. It's 0 when a recalibration ends and rises with time since then. It keeps rising during a
 recal window, until the recal finishes. It's a convenience summary for plots and policies, not a
-quantity from any paper or device.
+quantity from any paper or device. It's a deterministic function of time since the last
+recalibration and carries no information beyond that: it doesn't reflect day-to-day calibration
+quality, so policies that need quality should read `metrics{}` directly.
 
 ## Reproducibility
 
