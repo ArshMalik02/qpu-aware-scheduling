@@ -164,6 +164,8 @@ def main(argv: list[str] | None = None) -> int:
              "submit_delay_feed_min": feed_min(j["submit_delay_s"], speed)}
             for j in jobs if j["submit_delay_s"] and j["submit_delay_s"] > 1],
         "recal_overlap": recal_overlap(jobs, trans, speed, run_end),
+        "rechecks_badconstraints": [t["job"] for t in load_jsonl(d / "transitions.log")
+                                    if t.get("event") == "recheck"],
         "transitions": {"QPU_OUT": sum(t["action"] == "QPU_OUT" for t in trans),
                         "QPU_IN": sum(t["action"] == "QPU_IN" for t in trans)},
         "polls": len(polls),
@@ -182,7 +184,7 @@ def main(argv: list[str] | None = None) -> int:
 
     print(json.dumps({k: summary[k] for k in ("jobs_by_type", "states", "transitions", "qpu_wait",
                                               "classical_queue_wait", "rejected_at_submit_all_qpus_out",
-                                              "recal_overlap")}, indent=2))
+                                              "recal_overlap", "rechecks_badconstraints")}, indent=2))
     for k, v in checks.items():
         print(f"    {k}: {'ok' if v else 'NO'}")
     ok = all(checks.values())

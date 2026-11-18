@@ -62,6 +62,18 @@ def feed_state(feed: str, qpu: str) -> dict:
         return json.load(r)
 
 
+def stuck_qpu_jobs() -> list[str]:
+    """Pending --gres=qpu jobs with reason BadConstraints.
+
+    On 26.05.2, if every node's QPU is out (Gres=qpu:0 everywhere) while a QPU job is
+    pending, Slurm re-evaluates it as BadConstraints and never re-checks it after the
+    QPUs come back (DEVLOG 2026-11-18). hold + release makes it re-validate.
+    """
+    out = run("squeue", "-h", "-t", "PD", "-o", "%i|%r|%b")
+    return [l.split("|")[0] for l in out.splitlines()
+            if l.count("|") == 2 and l.split("|")[1] == "BadConstraints" and "qpu" in l.split("|")[2]]
+
+
 def queue_snapshot() -> list[str]:
     # id, name, state, reason, requested gres, node
     out = run("squeue", "-h", "-o", "%i|%j|%T|%r|%b|%N")
@@ -117,6 +129,16 @@ class Loop:
                 self.log_transition(node, qpu, have, want, st,
                                     f"{st.get('status')}: {st.get('status_reason')}")
             counts[node] = want if not self.observe_only else node_qpus(node)
+        if not self.observe_only and any(c >= 1 for c in counts.values()):
+            for jid in stuck_qpu_jobs():
+                run("scontrol", "hold", jid)
+                run("scontrol", "release", jid)
+                # No "action" key: rechecks aren't QPU_OUT/QPU_IN and don't affect overlap metrics.
+                self.tlog.write(json.dumps({"wall": wall(), "feed_time": feed_time, "event": "recheck",
+                                            "job": jid, "reason": "BadConstraints -> hold+release",
+                                            "simulated": True}) + "\n")
+                print(f"[{wall()}] feed={feed_time} job {jid}: BadConstraints after all QPUs were out; "
+                      f"hold+release to re-validate", flush=True)
         self.qlog.write(json.dumps({"wall": wall(), "feed_time": feed_time, "qpus": counts,
                                     "queue": queue_snapshot()}) + "\n")
 
