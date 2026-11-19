@@ -1,3 +1,90 @@
+## 2026-11-18: Reactive up/down loop (HRES-like) on 26.05.2
+
+Everything here is **simulated**: the QPUs are Slurm GRES counters, the jobs run on Aer (CPU), and QPU state comes from the simulated feed.
+
+**Step 3: can a node's QPU be taken out without draining the node?** Tested on the `cluster/` setup (Slurm 26.05.2, dynamic nodes registered with `--conf "Gres=qpu:1"`, no `gres.conf`). **Yes: `scontrol update NodeName=c1 Gres=qpu:0` works, and so does restoring with `Gres=qpu:1`.**
+
+| Check | Result |
+|---|---|
+| `scontrol update NodeName=c1 Gres=qpu:0` | rc 0; `sinfo` shows `c1 qpu:0`, node state unchanged (`IDLE+DYNAMIC_NORM`) |
+| QPU job submitted while c1 = `qpu:0` and c2's QPU busy | PENDING, reason `Resources` |
+| CPU-only job on c1 at the same time | RUNNING: removing the QPU doesn't block CPU work |
+| `scontrol update NodeName=c1 Gres=qpu:1` | rc 0; the pending QPU job started on c1 within one scheduling pass |
+| `qpu:0` while a QPU job is *running* on c1 | Accepted. The running job isn't touched and completed normally (`COMPLETED 0:0`); c1 stays `qpu:0` |
+| slurmd restart on c1 while at `qpu:0` | c1 **stays** `qpu:0`: the controller keeps its stored value over the node's `--conf` (same behavior as the 2026-10-26 stale-record bug) |
+
+So the DRAIN/RESUME fallback isn't needed, and CPU-only jobs keep running while a QPU is out, which is what HRES does too. Two differences from HRES: the pending reason is `Resources`, not `HRESDisabled`; and because the controller keeps `qpu:0` across slurmd restarts, the loop is the only thing that restores a QPU, so it has to restore every node when it exits.
+
+**The loop and the workload.** `make baseline-reactive SEED=1` does the following:
+- starts the feed as a sidecar (`docker compose --profile reactive`, seed 42, 36× speed, so ~30 min of wall time ≈ 18 h of feed time);
+- runs `policy/reactive.py` in slurmctld: it polls every 10 s and sets `Gres=qpu:0/1` per node, with qpu0→c1 and qpu1→c2;
+- submits `workload/gen.py --seed 1`: 35 jobs over 20 min, 12 QPU-only Bell, 8 hybrid toy-VQE (`-c2`) and 15 classical, each holding its resources for a seeded, *assumed* time;
+- drains the queue, restores the QPUs, and writes everything to `results/reactive/seed1/`.
+
+**What broke:**
+1. *All QPUs out → sbatch rejects QPU jobs.* The first full run died when `sbatch --gres=qpu:1` failed with `Requested node configuration is not available`. That happens while the two daily full recals overlap (feed ≈ 03:55–04:13), because with `qpu:0` on every node, no node is configured for the job at all. HRES would accept the job and hold it with `HRESDisabled`. Fix: `gen.py` retries those jobs every 5 s without delaying other arrivals, logs `submit_delay_s`, and `summarize.py` counts that delay as QPU wait. In the passing run, `hybrid-012` was rejected once and accepted 5 s later.
+
+**Results** (seed 1, x86_64, simulated; times UTC). Feed speed 36× (from `run_config.json`), so 1 wall second = 0.6 feed minutes. Every wait is given as wall s / feed min. The workload manifest is byte-identical to the first run's.
+
+| | Value |
+|---|---|
+| Jobs | 35, all COMPLETED |
+| Loop transitions | 5 × QPU_OUT, 5 × QPU_IN, matching the feed's recal windows as seen by the loop, up to one poll late (qpu0 quick 00:00–00:24, full 02:31–04:13, quick 10:14–10:56; qpu1 full 03:55–05:37, quick 11:38–12:20, feed time) |
+| Polls with a QPU out | 49 of 127 |
+| **Recal overlap** (QPU/hybrid jobs RUNNING on a node when its QPU went out) | **1 job**: `hybrid-032` on c2, **55 s / 33.0 feed min** |
+| QPU wait, QPU-only jobs | mean 21.2 s / 12.7 min, median 0 / 0, p95 = max 86 s / 51.6 min |
+| QPU wait, hybrid jobs | mean 1.3 s / 0.8 min, max 5 s / 3.0 min (the one submit rejection) |
+| Classical queue wait | mean 1.7 s / 1.0 min, max 11 s / 6.6 min |
+| Submit rejections (all QPUs out) | 1 (`hybrid-012`, 5 s / 3.0 min) |
+| BadConstraints rechecks | 0 in this run (see below) |
+| Checks | all jobs COMPLETED ✔; QPU taken out and restored ✔; QPU job PENDING (`Resources`) while a QPU was out ✔ (21 polls); classical job RUNNING on a node whose QPU was out ✔ (3 polls) → **PASS** |
+
+Recal overlap is the number a predictive policy should bring down: a reactive loop only acts after a recal has started, so a job already holding the QPU keeps it. `summarize.py` measures it from `jobs.csv` and `transitions.log` alone. A non-reactive policy can produce the same `transitions.log` with `reactive.py --observe-only`, so all three policies are measured the same way.
+
+Excerpt: c1's QPU went out at feed 02:30 for the full recal, and `qpu-006` then pended while c2's QPU was busy:
+
+```
+[22:44:43Z] feed=2026-11-01T02:30:50Z c1/qpu0 QPU_OUT qpu:1->0 (paused: full recalibration in progress (simulated))
+queue.log 22:45:03Z feed 02:42:52  qpus {c1: 0, c2: 1}
+  144|qpu-006|PENDING|Resources|gres/qpu:1|
+  143|qpu-005|RUNNING|None|gres/qpu:1|c2
+jobs.csv: qpu-006 submit 22:44:55, start 22:45:34 on c2 → QPU wait 39 s / 23.4 feed min
+```
+
+**Two more things broke while rerunning:**
+2. *Nodes DOWN after a Docker restart.* After the Docker daemon restarted, slurmctld marked c1 and c2 `DOWN` ("Node unexpectedly rebooted"). One run had every job stuck in `ReqNodeNotAvail` until the drain timeout cancelled all 35. The old checks didn't catch it: jobs pending behind down nodes were counted as "pending while QPU out". Fixes:
+   - the run script now resumes down nodes and stops before submitting if they stay down;
+   - new check 0 requires every job to have COMPLETED;
+   - check 2 now counts only reason `Resources`.
+3. *QPU jobs stuck in `BadConstraints`.* In another run, `qpu-011` was pending (`Resources`) when the second QPU also went out (both out ≈ feed 03:58–04:10). Slurm re-evaluated it against a cluster with no `qpu` configured, set it to `BadConstraints`, and never re-checked it after the QPUs returned. I reproduced this on its own; `scontrol hold` + `release` makes the job re-validate and run. The loop now does that on every poll where a QPU is in, and logs a `recheck` event. It wasn't triggered in the committed run, because no QPU job happened to be pending at the moment both QPUs went out.
+
+**BadConstraints repro (`policy/repro_badconstraints.sh`).** The recheck path wasn't triggered in the committed seed-1 run, so a script triggers it on purpose. It runs the real `reactive.py` (2 s polling) against a stub feed whose per-QPU status the script sets:
+1. qpu0 paused, so c1 goes to `qpu:0`.
+2. A blocker job holds c2's QPU, and the victim QPU job pends.
+3. qpu1 is paused too, so every QPU is out.
+4. Both come back online.
+
+PASS on x86_64 (simulated):
+
+```
+[02:52:23Z] step 1: qpu0 paused -> loop takes c1's QPU out
+[02:52:29Z]     victim 175: PENDING Resources
+[02:52:29Z] step 3: qpu1 paused too -> every QPU out      (c1 qpu:0, c2 qpu:0)
+[02:52:33Z]     victim 175: PENDING BadConstraints
+[02:52:33Z] step 4: both online -> loop restores both QPUs and rechecks stuck jobs
+[2026-11-19T02:52:33Z] feed=stub job 175: BadConstraints after all QPUs were out; hold+release to re-validate
+[02:52:37Z]     victim 175: COMPLETED
+[02:52:38Z] PASS: victim went Resources -> BadConstraints, was rechecked by the loop, and COMPLETED (simulated)
+```
+
+Without the recheck the job stays `BadConstraints` after the QPUs return (reproduced by hand earlier the same day: still stuck 35 s after both QPUs and the blocker were cleared).
+
+**Not like HRES:** the pending reason is `Resources`, not `HRESDisabled`; when every QPU is out, new jobs are rejected at submit and already-pending ones go to `BadConstraints` (both above) instead of being held; there's no admission check on slots, `busy` or status age; there's up to one poll (10 s ≈ 6 min of feed time) of lag each way; and nothing restores a QPU except the loop.
+
+**Takeaway:** taking the QPU out by GRES count gives the HRES effect on 26.05.2 (QPU jobs wait, CPU work continues) for 49 of 127 polls in this run. The wait lands on QPU-only jobs (p95 86 s / 51.6 feed min, simulated). One hybrid job (`hybrid-032`) was already running when its node's QPU went out and kept it for another 55 s / 33.0 feed min: that's the recal overlap a reactive loop can't avoid and a predictive policy should reduce. The case HRES handles better is when every QPU is out at once (submit rejections, `BadConstraints`).
+
+**Next:** policy 1 (static) and policy 3 (simple predictive) on the same seeded workload, then the comparison table (3 seeds).
+
 ## 2026-11-03: Aer job through --gres=qpu:1 + toy VQE timing
 
 **Setup:** the Docker cluster from `cluster/` (Slurm 26.05.2, nodes c1 and c2, each with `qpu:1`), run on **x86_64** Linux. Qiskit 2.6.1, qiskit-aer 0.18.2, numpy 2.5.4 and scipy 1.18.1 are baked into the image from wheels: `cluster/requirements-jobs.txt`, plus `cluster/constraints-jobs.txt` (the `pip freeze`) passed with `-c` so transitive dependencies are pinned too. Two batch jobs (`jobs/`), each with `--gres=qpu:1 -c1 --mem=500M`, were submitted together by `jobs/verify_aer.sh`. Everything is **simulated**: Aer on CPU, and the `qpu` GRES is a counter.
