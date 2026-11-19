@@ -105,6 +105,8 @@ Overlap times have 1 s resolution (sacct).
   loop works around it on every poll where at least one QPU is in: it runs `scontrol hold` +
   `scontrol release` on such jobs, which makes them re-validate, and logs a `recheck` event in
   `transitions.log`. `summary.json` lists those jobs as `rechecks_badconstraints`.
+  [`repro_badconstraints.sh`](repro_badconstraints.sh) reproduces this on purpose against a stub feed
+  and checks that the loop's recheck lets the stuck job complete (run it on an idle cluster).
 - **No admission check on slots, `busy` or cache age.** HRES checks `available_slots` and holds jobs
   when its cached status is older than `status_max_age`. Here, if the feed is unreachable the loop logs
   the error and keeps the node's last state.
