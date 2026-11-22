@@ -98,6 +98,28 @@ services:
       retries: 3
       start_period: 20s
 
+  # qpu-aware-scheduling: the SIMULATED calibration feed (../feed) as a sidecar, reachable
+  # as http://feed:8787 from the cluster. Only started with --profile reactive.
+  feed:
+    image: slurm-docker-cluster:${SLURM_VERSION:-26.05.2}
+    profiles: ["reactive"]
+    container_name: qpu-feed
+    hostname: feed
+    entrypoint: ["python3", "/feed/calibration_feed.py"]
+    command: ["--seed", "${FEED_SEED:-42}", "--speed", "${FEED_SPEED:-36}",
+              "--host", "0.0.0.0", "--port", "8787"]
+    volumes:
+      - ../feed:/feed:ro
+    expose:
+      - "8787"
+    networks:
+      - slurm-network
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:8787/healthz')\""]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
   slurmrestd:
     image: slurm-docker-cluster:${SLURM_VERSION:-26.05.2}
     init: true

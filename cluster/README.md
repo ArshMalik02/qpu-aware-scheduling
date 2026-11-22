@@ -43,6 +43,10 @@ Applied from [`experiments/week0/gres-qpu.patch`](../experiments/week0/gres-qpu.
    [`../jobs/`](../jobs/). A missing wheel fails the build instead of compiling Aer from source.
    [`constraints-jobs.txt`](constraints-jobs.txt) (a `pip freeze` of the image) is passed with `-c`, so
    transitive dependencies are pinned too.
+6. `docker-compose.yml`: a `feed` service (profile `reactive`) runs the simulated calibration feed
+   from [`../feed/`](../feed/) on the same image, reachable as `http://feed:8787` inside the cluster.
+   A plain `docker compose up` doesn't start it; `make baseline-reactive` does
+   (see [`../policy/README.md`](../policy/README.md)).
 
 If nodes still show `qpu:0`:
 

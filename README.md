@@ -40,6 +40,11 @@ Details, numbers and bugs hit along the way: [DEVLOG.md](DEVLOG.md).
 
 ## Repo layout
 
+- `cluster/`: the Docker Slurm cluster with a `qpu` GRES
+- `feed/`: the simulated QPU calibration feed
+- `jobs/`: simulated Aer jobs through `--gres=qpu:1`
+- `policy/`, `workload/`: the reactive up/down loop and the seeded workload (`make baseline-reactive SEED=1`)
+- `docs/landscape.md`: where QPU state does and doesn't reach the scheduler
 - `experiments/week0/`: overcommit test, GRES patch, sbatch scripts
 - `DEVLOG.md`: what I ran, what I saw, what broke
 

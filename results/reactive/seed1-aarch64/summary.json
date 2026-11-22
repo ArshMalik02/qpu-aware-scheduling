@@ -1,0 +1,161 @@
+{
+  "simulated": true,
+  "run_config": {
+    "seed": 1,
+    "feed_seed": 42,
+    "feed_speed": 36,
+    "run_min": 20,
+    "rate_per_min": 1.5,
+    "poll_interval_s": 10,
+    "map": "qpu0=c1,qpu1=c2",
+    "start_utc": "2026-11-22T22:11:01",
+    "simulated": true
+  },
+  "units": "wall_s = wall-clock seconds; feed_min = wall_s * feed_speed / 60 (simulated feed minutes)",
+  "jobs_by_type": {
+    "qpu": 12,
+    "hybrid": 8,
+    "classical": 15
+  },
+  "states": {
+    "COMPLETED": 35
+  },
+  "qpu_wait": {
+    "qpu": {
+      "n": 12,
+      "wall_s": {
+        "mean": 21.2,
+        "median": 1.0,
+        "p95": 82.0,
+        "max": 82.0
+      },
+      "feed_min": {
+        "mean": 12.7,
+        "median": 0.6,
+        "p95": 49.2,
+        "max": 49.2
+      }
+    },
+    "hybrid": {
+      "n": 8,
+      "wall_s": {
+        "mean": 1.2,
+        "median": 1.0,
+        "p95": 2.0,
+        "max": 2.0
+      },
+      "feed_min": {
+        "mean": 0.7,
+        "median": 0.6,
+        "p95": 1.2,
+        "max": 1.2
+      }
+    }
+  },
+  "classical_queue_wait": {
+    "n": 15,
+    "wall_s": {
+      "mean": 2.8,
+      "median": 1.0,
+      "p95": 22.0,
+      "max": 22.0
+    },
+    "feed_min": {
+      "mean": 1.7,
+      "median": 0.6,
+      "p95": 13.2,
+      "max": 13.2
+    }
+  },
+  "rejected_at_submit_all_qpus_out": [],
+  "recal_overlap": {
+    "count": 1,
+    "jobs": [
+      {
+        "job_id": "81",
+        "name": "hybrid-032",
+        "type": "hybrid",
+        "node": "c2",
+        "qpu_out_at": "2026-11-22T22:30:30Z",
+        "overlap_wall_s": 49.0,
+        "overlap_feed_min": 29.4
+      }
+    ],
+    "total_overlap_wall_s": 49.0,
+    "total_overlap_feed_min": 29.4
+  },
+  "rechecks_badconstraints": [],
+  "transitions": {
+    "QPU_OUT": 5,
+    "QPU_IN": 5
+  },
+  "polls": 125,
+  "polls_with_qpu_out": 46,
+  "qpu_job_pending_while_qpu_out": {
+    "count": 21,
+    "first": [
+      {
+        "wall": "2026-11-22T22:15:26Z",
+        "feed_time": "2026-11-01T02:39:23Z",
+        "qpus_out_on": [
+          "c1"
+        ],
+        "job": "55",
+        "name": "qpu-006",
+        "reason": "Resources"
+      },
+      {
+        "wall": "2026-11-22T22:15:36Z",
+        "feed_time": "2026-11-01T02:45:29Z",
+        "qpus_out_on": [
+          "c1"
+        ],
+        "job": "55",
+        "name": "qpu-006",
+        "reason": "Resources"
+      },
+      {
+        "wall": "2026-11-22T22:15:46Z",
+        "feed_time": "2026-11-01T02:51:36Z",
+        "qpus_out_on": [
+          "c1"
+        ],
+        "job": "55",
+        "name": "qpu-006",
+        "reason": "Resources"
+      }
+    ]
+  },
+  "classical_running_on_qpu_out_node": {
+    "count": 7,
+    "first": [
+      {
+        "wall": "2026-11-22T22:16:06Z",
+        "feed_time": "2026-11-01T03:03:46Z",
+        "node": "c1",
+        "job": "56",
+        "name": "classical-007"
+      },
+      {
+        "wall": "2026-11-22T22:16:17Z",
+        "feed_time": "2026-11-01T03:09:52Z",
+        "node": "c1",
+        "job": "56",
+        "name": "classical-007"
+      },
+      {
+        "wall": "2026-11-22T22:16:27Z",
+        "feed_time": "2026-11-01T03:15:58Z",
+        "node": "c1",
+        "job": "56",
+        "name": "classical-007"
+      }
+    ]
+  },
+  "checks": {
+    "0_all_jobs_completed": true,
+    "1_qpu_taken_out_and_restored": true,
+    "2_qpu_job_pending_while_qpu_out": true,
+    "3_classical_running_on_qpu_out_node": true
+  }
+}
