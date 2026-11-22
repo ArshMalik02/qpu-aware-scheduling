@@ -96,6 +96,25 @@ def recal_overlap(jobs: list[dict], transitions: list[dict], speed: float, run_e
             "total_overlap_wall_s": round(total, 1), "total_overlap_feed_min": feed_min(total, speed)}
 
 
+def _makespan(jobs: list[dict], speed: float) -> dict | None:
+    subs = [ts(j["submit"]) for j in jobs if ts(j["submit"])]
+    ends = [ts(j["end"]) for j in jobs if ts(j["end"])]
+    if not subs or not ends:
+        return None
+    w = (max(ends) - min(subs)).total_seconds()
+    return {"wall_s": round(w, 1), "feed_min": feed_min(w, speed)}
+
+
+def _gate_counts(events: list[dict]) -> dict:
+    """Predictive gate events (empty counts for other policies)."""
+    g = [e for e in events if str(e.get("event", "")).startswith("gate_")]
+    held = {e["job"] for e in g if e["event"] in ("gate_hold", "gate_rehold")}
+    return {"jobs_held_by_gate": len(held),
+            "releases": sum(e["event"] == "gate_release" for e in g),
+            "reholds": sum(e["event"] == "gate_rehold" for e in g),
+            "excludes_updated": sum(e["event"] == "gate_exclude" for e in g)}
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--run-dir", required=True)
@@ -118,9 +137,12 @@ def main(argv: list[str] | None = None) -> int:
         delay = rec.get("submit_delay_s", 0.0)
         # QPU wait = time sbatch kept rejecting it (no QPU configured anywhere) + queue wait.
         qwait = round(delay + wait, 2) if wait is not None else None
+        end = ts(r["End"])
+        # Completion = end - intended arrival (submit time minus any submit-rejection delay).
+        comp = round((end - sub).total_seconds() + delay, 2) if end and sub and r["State"] == "COMPLETED" else None
         jobs.append({"job_id": r["JobID"], "name": r["JobName"], "type": kind,
                      "state": r["State"], "node": r["NodeList"], "submit": r["Submit"],
-                     "start": r["Start"], "end": r["End"],
+                     "start": r["Start"], "end": r["End"], "completion_s": comp,
                      "submit_delay_s": delay, "queue_wait_s": wait,
                      "qpu_wait_s": qwait if kind != "classical" else "",
                      "qpu_wait_feed_min": feed_min(qwait, speed) if kind != "classical" and qwait is not None else ""})
@@ -159,6 +181,14 @@ def main(argv: list[str] | None = None) -> int:
         "states": {s: sum(j["state"] == s for j in jobs) for s in sorted({j["state"] for j in jobs})},
         "qpu_wait": {k: stats([j["qpu_wait_s"] for j in jobs if j["type"] == k], speed) for k in ("qpu", "hybrid")},
         "classical_queue_wait": stats([j["queue_wait_s"] for j in jobs if j["type"] == "classical"], speed),
+        "completion": {k: stats([j["completion_s"] for j in jobs if j["type"] == k], speed)
+                       for k in ("qpu", "hybrid", "classical")},
+        "completion_all": stats([j["completion_s"] for j in jobs], speed),
+        "makespan": _makespan(jobs, speed),
+        "jobs_total": len(jobs),
+        "jobs_completed": sum(j["state"] == "COMPLETED" for j in jobs),
+        "submit_rejections": sum(1 for j in jobs if j["submit_delay_s"] and j["submit_delay_s"] > 1),
+        "gate": _gate_counts(load_jsonl(d / "transitions.log")),
         "rejected_at_submit_all_qpus_out": [
             {"job_id": j["job_id"], "name": j["name"], "submit_delay_s": j["submit_delay_s"],
              "submit_delay_feed_min": feed_min(j["submit_delay_s"], speed)}
@@ -173,18 +203,24 @@ def main(argv: list[str] | None = None) -> int:
         "qpu_job_pending_while_qpu_out": {"count": len(pending_examples), "first": pending_examples[:3]},
         "classical_running_on_qpu_out_node": {"count": len(running_examples), "first": running_examples[:3]},
     }
+    policy = cfg.get("policy", "reactive")
     checks = {
         "0_all_jobs_completed": bool(jobs) and all(j["state"] == "COMPLETED" for j in jobs),
+        # static only observes the recal windows (reactive.py --observe-only), so check 1
+        # means "windows were observed" there, and 2-3 (QPU actually taken out) don't apply.
         "1_qpu_taken_out_and_restored": summary["transitions"]["QPU_OUT"] > 0 and summary["transitions"]["QPU_IN"] > 0,
-        "2_qpu_job_pending_while_qpu_out": len(pending_examples) > 0,
-        "3_classical_running_on_qpu_out_node": len(running_examples) > 0,
     }
+    if policy != "static":
+        checks["2_qpu_job_pending_while_qpu_out"] = len(pending_examples) > 0
+        checks["3_classical_running_on_qpu_out_node"] = len(running_examples) > 0
     summary["checks"] = checks
     (d / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
 
     print(json.dumps({k: summary[k] for k in ("jobs_by_type", "states", "transitions", "qpu_wait",
-                                              "classical_queue_wait", "rejected_at_submit_all_qpus_out",
-                                              "recal_overlap", "rechecks_badconstraints")}, indent=2))
+                                              "classical_queue_wait", "completion_all", "makespan",
+                                              "rejected_at_submit_all_qpus_out", "recal_overlap",
+                                              "rechecks_badconstraints", "gate")}, indent=2))
+    print(f"    policy: {policy}")
     for k, v in checks.items():
         print(f"    {k}: {'ok' if v else 'NO'}")
     ok = all(checks.values())
