@@ -1,0 +1,300 @@
+{
+  "assumed": true,
+  "duration_min": 20.0,
+  "jobs": [
+    {
+      "arrival_s": 5.77,
+      "cpus": 1,
+      "hold_s": 86.6,
+      "idx": 0,
+      "qpu": false,
+      "type": "classical"
+    },
+    {
+      "arrival_s": 17.55,
+      "cpus": 2,
+      "hold_s": 53.7,
+      "idx": 1,
+      "qpu": true,
+      "type": "hybrid"
+    },
+    {
+      "arrival_s": 59.73,
+      "cpus": 1,
+      "hold_s": 5.9,
+      "idx": 2,
+      "qpu": false,
+      "type": "classical"
+    },
+    {
+      "arrival_s": 60.88,
+      "cpus": 1,
+      "hold_s": 34.0,
+      "idx": 3,
+      "qpu": false,
+      "type": "classical"
+    },
+    {
+      "arrival_s": 118.34,
+      "cpus": 1,
+      "hold_s": 26.5,
+      "idx": 4,
+      "qpu": true,
+      "type": "qpu"
+    },
+    {
+      "arrival_s": 169.48,
+      "cpus": 1,
+      "hold_s": 130.7,
+      "idx": 5,
+      "qpu": true,
+      "type": "qpu"
+    },
+    {
+      "arrival_s": 262.16,
+      "cpus": 1,
+      "hold_s": 1.2,
+      "idx": 6,
+      "qpu": true,
+      "type": "qpu"
+    },
+    {
+      "arrival_s": 293.34,
+      "cpus": 1,
+      "hold_s": 28.8,
+      "idx": 7,
+      "qpu": false,
+      "type": "classical"
+    },
+    {
+      "arrival_s": 303.11,
+      "cpus": 2,
+      "hold_s": 2.7,
+      "idx": 8,
+      "qpu": true,
+      "type": "hybrid"
+    },
+    {
+      "arrival_s": 313.13,
+      "cpus": 2,
+      "hold_s": 61.6,
+      "idx": 9,
+      "qpu": true,
+      "type": "hybrid"
+    },
+    {
+      "arrival_s": 323.75,
+      "cpus": 1,
+      "hold_s": 11.1,
+      "idx": 10,
+      "qpu": true,
+      "type": "qpu"
+    },
+    {
+      "arrival_s": 348.37,
+      "cpus": 1,
+      "hold_s": 1.0,
+      "idx": 11,
+      "qpu": true,
+      "type": "qpu"
+    },
+    {
+      "arrival_s": 421.07,
+      "cpus": 2,
+      "hold_s": 92.5,
+      "idx": 12,
+      "qpu": true,
+      "type": "hybrid"
+    },
+    {
+      "arrival_s": 429.3,
+      "cpus": 1,
+      "hold_s": 117.9,
+      "idx": 13,
+      "qpu": false,
+      "type": "classical"
+    },
+    {
+      "arrival_s": 434.45,
+      "cpus": 1,
+      "hold_s": 57.5,
+      "idx": 14,
+      "qpu": true,
+      "type": "qpu"
+    },
+    {
+      "arrival_s": 484.13,
+      "cpus": 1,
+      "hold_s": 32.9,
+      "idx": 15,
+      "qpu": false,
+      "type": "classical"
+    },
+    {
+      "arrival_s": 555.02,
+      "cpus": 1,
+      "hold_s": 21.7,
+      "idx": 16,
+      "qpu": false,
+      "type": "classical"
+    },
+    {
+      "arrival_s": 590.45,
+      "cpus": 1,
+      "hold_s": 112.3,
+      "idx": 17,
+      "qpu": false,
+      "type": "classical"
+    },
+    {
+      "arrival_s": 618.6,
+      "cpus": 2,
+      "hold_s": 3.2,
+      "idx": 18,
+      "qpu": true,
+      "type": "hybrid"
+    },
+    {
+      "arrival_s": 629.72,
+      "cpus": 1,
+      "hold_s": 32.1,
+      "idx": 19,
+      "qpu": false,
+      "type": "classical"
+    },
+    {
+      "arrival_s": 637.32,
+      "cpus": 2,
+      "hold_s": 109.3,
+      "idx": 20,
+      "qpu": true,
+      "type": "hybrid"
+    },
+    {
+      "arrival_s": 682.21,
+      "cpus": 1,
+      "hold_s": 26.0,
+      "idx": 21,
+      "qpu": true,
+      "type": "qpu"
+    },
+    {
+      "arrival_s": 710.62,
+      "cpus": 1,
+      "hold_s": 44.2,
+      "idx": 22,
+      "qpu": false,
+      "type": "classical"
+    },
+    {
+      "arrival_s": 730.6,
+      "cpus": 2,
+      "hold_s": 2.7,
+      "idx": 23,
+      "qpu": true,
+      "type": "hybrid"
+    },
+    {
+      "arrival_s": 732.38,
+      "cpus": 1,
+      "hold_s": 240.0,
+      "idx": 24,
+      "qpu": false,
+      "type": "classical"
+    },
+    {
+      "arrival_s": 768.36,
+      "cpus": 1,
+      "hold_s": 8.4,
+      "idx": 25,
+      "qpu": true,
+      "type": "qpu"
+    },
+    {
+      "arrival_s": 796.26,
+      "cpus": 1,
+      "hold_s": 88.3,
+      "idx": 26,
+      "qpu": false,
+      "type": "classical"
+    },
+    {
+      "arrival_s": 827.29,
+      "cpus": 1,
+      "hold_s": 15.9,
+      "idx": 27,
+      "qpu": false,
+      "type": "classical"
+    },
+    {
+      "arrival_s": 856.13,
+      "cpus": 1,
+      "hold_s": 51.7,
+      "idx": 28,
+      "qpu": false,
+      "type": "classical"
+    },
+    {
+      "arrival_s": 880.72,
+      "cpus": 1,
+      "hold_s": 35.7,
+      "idx": 29,
+      "qpu": true,
+      "type": "qpu"
+    },
+    {
+      "arrival_s": 1006.69,
+      "cpus": 1,
+      "hold_s": 68.9,
+      "idx": 30,
+      "qpu": true,
+      "type": "qpu"
+    },
+    {
+      "arrival_s": 1075.39,
+      "cpus": 1,
+      "hold_s": 80.9,
+      "idx": 31,
+      "qpu": false,
+      "type": "classical"
+    },
+    {
+      "arrival_s": 1141.64,
+      "cpus": 2,
+      "hold_s": 74.2,
+      "idx": 32,
+      "qpu": true,
+      "type": "hybrid"
+    },
+    {
+      "arrival_s": 1163.85,
+      "cpus": 1,
+      "hold_s": 91.8,
+      "idx": 33,
+      "qpu": true,
+      "type": "qpu"
+    },
+    {
+      "arrival_s": 1197.61,
+      "cpus": 1,
+      "hold_s": 31.6,
+      "idx": 34,
+      "qpu": true,
+      "type": "qpu"
+    }
+  ],
+  "max_hold_s": 240.0,
+  "mean_hold_s": {
+    "classical": 60.0,
+    "hybrid": 90.0,
+    "qpu": 45.0
+  },
+  "mix": {
+    "classical": 0.4,
+    "hybrid": 0.2,
+    "qpu": 0.4
+  },
+  "rate_per_min": 1.5,
+  "seed": 1,
+  "simulated": true
+}
