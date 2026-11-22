@@ -81,7 +81,7 @@ The same job overlaps a recal on both architectures, for a similar length, so th
 3. qpu1 is paused too, so every QPU is out.
 4. Both come back online.
 
-PASS on x86_64 (simulated):
+PASS on x86_64 (output below) and on the M1 (aarch64) (simulated):
 
 ```
 [02:52:23Z] step 1: qpu0 paused -> loop takes c1's QPU out
@@ -94,7 +94,7 @@ PASS on x86_64 (simulated):
 [02:52:38Z] PASS: victim went Resources -> BadConstraints, was rechecked by the loop, and COMPLETED (simulated)
 ```
 
-Without the recheck the job stays `BadConstraints` after the QPUs return (reproduced by hand earlier the same day: still stuck 35 s after both QPUs and the blocker were cleared).
+The repro also passed on the M1 (aarch64), as reported by the person who ran it (that output isn't committed). Without the recheck the job stays `BadConstraints` after the QPUs return (reproduced by hand earlier the same day: still stuck 35 s after both QPUs and the blocker were cleared).
 
 **Not like HRES:** the pending reason is `Resources`, not `HRESDisabled`; when every QPU is out, new jobs are rejected at submit and already-pending ones go to `BadConstraints` (both above) instead of being held; there's no admission check on slots, `busy` or status age; there's up to one poll (10 s ≈ 6 min of feed time) of lag each way; and nothing restores a QPU except the loop.
 
