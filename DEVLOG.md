@@ -51,6 +51,23 @@ queue.log 22:45:03Z feed 02:42:52  qpus {c1: 0, c2: 1}
 jobs.csv: qpu-006 submit 22:44:55, start 22:45:34 on c2 → QPU wait 39 s / 23.4 feed min
 ```
 
+**aarch64 (M1) run.** `make baseline-reactive SEED=1` also passed on the M1 Mac (Docker Desktop), in `results/reactive/seed1-aarch64/`. Same config (feed seed 42, 36×, 20 min at 1.5/min), and the manifest is byte-identical to the x86_64 run. Before it, the M1 cluster needed `scontrol delete nodename=c1,c2` plus a worker restart: both nodes were DOWN and c1's stored record showed GRES `(null)`, another stale controller record.
+
+| Simulated, wall s / feed min | aarch64 (M1) | x86_64 (Linux) |
+|---|---|---|
+| Jobs | 35, all COMPLETED | 35, all COMPLETED |
+| Loop transitions | 5 × QPU_OUT, 5 × QPU_IN | 5 × QPU_OUT, 5 × QPU_IN |
+| Polls with a QPU out | 46 of 125 | 49 of 127 |
+| **Recal overlap** | **1 job, `hybrid-032` on c2: 49 s / 29.4 min** | **1 job, `hybrid-032` on c2: 55 s / 33.0 min** |
+| QPU wait, QPU-only (mean; p95 = max) | 21.2 s / 12.7 min; 82 s / 49.2 min | 21.2 s / 12.7 min; 86 s / 51.6 min |
+| QPU wait, hybrid (max) | 2 s / 1.2 min | 5 s / 3.0 min |
+| Classical queue wait (mean; max) | 2.8 s / 1.7 min; 22 s / 13.2 min | 1.7 s / 1.0 min; 11 s / 6.6 min |
+| Rejected at submit (all QPUs out) | 0 | 1 (`hybrid-012`, 5 s) |
+| BadConstraints rechecks | 0 | 0 |
+| Checks | PASS | PASS |
+
+The same job overlaps a recal on both architectures, for a similar length, so the overlap metric gives the same answer across machines. The submit rejection only happened on x86_64: `hybrid-012` arrives within a few seconds of the brief window when both QPUs are out, so whether it hits that window depends on run timing.
+
 **Two more things broke while rerunning:**
 2. *Nodes DOWN after a Docker restart.* After the Docker daemon restarted, slurmctld marked c1 and c2 `DOWN` ("Node unexpectedly rebooted"). One run had every job stuck in `ReqNodeNotAvail` until the drain timeout cancelled all 35. The old checks didn't catch it: jobs pending behind down nodes were counted as "pending while QPU out". Fixes:
    - the run script now resumes down nodes and stops before submitting if they stay down;
