@@ -31,6 +31,33 @@ This runs [`run_baseline_reactive.sh`](run_baseline_reactive.sh), which does the
 | `RATE_PER_MIN` | 1.5 | mean arrivals per minute |
 | `DRAIN_MIN` | 15 | max wait for the queue to empty; anything left is cancelled |
 
+## Three policies and the sweep
+
+| Policy | Command | What it does |
+|---|---|---|
+| static | `reactive.py --observe-only` | Never touches nodes; only logs the recal windows, so its overlap is measured the same way |
+| reactive | `reactive.py` | Takes a node's QPU out while the feed isn't online (HRES-like) |
+| predictive | `predictive.py` | Reactive, plus: a QPU job may start on a QPU only if `now + its time limit + one poll ≤ next_recal.start` (feed time) |
+
+```bash
+make baseline POLICY=predictive SEED=1                       # one run (~35 min)
+make sweep SEEDS="1 2 3 4 5" POLICIES="static reactive predictive"   # prints its estimated wall time first
+make aggregate                                               # re-run aggregate + chart on existing results
+```
+
+For seed N, every policy uses workload seed N and feed seed 100+N. Results go to `results/<policy>/seed<N>/`. `aggregate.py` writes
+`results/sweep_summary.csv` (one row per policy × seed) and `results/sweep_table.md` (median and min–max across seeds), and `plot_sweep.py` writes
+`results/sweep.png`. The sweep uses `RUN_MIN=30`.
+
+**Predictive mechanism (26.05.2):**
+- QPU jobs are submitted held (`gen.py --hold-qpu`).
+- About every second, the gate releases a held job once at least one QPU fits it. It sets `ExcNodeList` to the QPUs that don't fit, and holds a released job again if none fit any more.
+- The rule uses the time limit Slurm enforces, which is rounded up to whole minutes, converted to feed time with `feed_speed`.
+- Unlike an HRES prerun gate, the decision is made outside the scheduler, so it can lag by ~1 s.
+- A held submit is accepted even while every QPU is out. So predictive never has submit rejections, and that column isn't comparable across policies.
+
+**Time limits:** `limit_s = ceil(hold_s × 1.5) + 30`, as `--time=MM:SS`. Hold times are assumed.
+
 ## How the loop takes a QPU out
 
 Every 10 s (the `maintenance_cycle` in the HRES plugin example), for each `qpu → node`
