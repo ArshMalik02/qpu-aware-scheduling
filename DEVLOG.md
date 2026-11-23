@@ -1,3 +1,48 @@
+## 2026-11-22: Predictive (recal-timing) policy + 3-policy sweep runner
+
+Everything here is **simulated**: the QPUs are Slurm GRES counters, the jobs run on Aer (CPU), and recal windows come from the simulated feed. The claim being tested is narrow: what does seeing a recal *before* it starts buy you? Slurm 26.11 HRES and the reactive loop from 2026-11-18 only act once a recal has started.
+
+**Per-job time limits.** Every job used to get `--time=00:10:00`, far longer than any hold (max 240 s), and a rule based on time limits would have blocked almost everything. `gen.py` now sets `limit_s = ceil(hold_s × 1.5) + 30` as `--time=MM:SS`. **Slurm rounds limits up to whole minutes:** `--time=01:45` became `TimeLimit=00:02:00` on 26.05.2. So the manifest also records `slurm_limit_s`, and the predictive rule uses the limit Slurm enforces (read from `squeue %l`), not the requested one. A test checks that `hold_s < limit_s ≤ slurm_limit_s`. The same manifest is used for all three policies.
+
+**The rule** (`policy/predictive.py`, pure function `fits()`): a QPU job may start on a QPU only if that QPU is online and, in feed time, `now + limit + one poll interval ≤ next_recal.start`. Wall time is converted to feed time with `feed_speed` from `run_config.json`, so at 36× a 2-minute limit is 72 feed minutes and the 10 s poll adds 6. Unit tests cover: fits, doesn't fit, the exact boundary, a recal already running, two QPUs with one fitting, and none or both fitting.
+
+**Mechanism on 26.05.2** (no HRES):
+- QPU jobs are submitted held (`gen.py --hold-qpu`).
+- About every second, the gate computes which QPUs fit each pending QPU job. If some fit, it sets `scontrol update ExcNodeList=<nodes that don't fit>` and releases the job. If none fit, the job stays held. A released job that stops fitting is held again, and a changed fitting set updates `ExcNodeList`.
+- The feed is still polled every 10 s. Between polls, feed time is extrapolated from the last poll at `feed_speed`, so held jobs aren't kept waiting for the next poll.
+- Every hold, release and exclude is logged to `transitions.log` with the job, its limit, and the time to each QPU's next recal (feed min).
+- Checked live against a stub feed. A job that fit only on c1 got `ExcNodeList=c2` and ran on c1. With both QPUs near a recal, a job stayed held until qpu1's recal moved out, then ran on c2.
+
+**How this differs from an HRES prerun gate:** HRES evaluates a job in `hres_controller_job_prerun`, just before it would start, with `job.end_time = start + time limit`, and can say "not now" for that one scheduling attempt. Here the decision is made from outside the scheduler, ahead of time: there's up to ~1 s of gate lag, and a decision can be stale by the time Slurm picks the job. The comparison itself is the same, so it maps onto an HRES prerun gate later.
+
+**A held submit is accepted while every QPU is out.** `sbatch --hold --gres=qpu:1` succeeded with `qpu:0` on both nodes, where the same submit without `--hold` is rejected ("Requested node configuration is not available", 2026-11-18). Released after the QPUs returned, the job ran normally. So predictive never sees submit rejections, while static and reactive can. The `submit_rejections` column isn't comparable across policies, and a rejected job's delay is still counted as QPU wait.
+
+**Policies in the sweep:** static = `reactive.py --observe-only` (logs the recal windows, never touches nodes, so its overlap is measured the same way); reactive = `reactive.py`; predictive = `predictive.py`. `make sweep SEEDS="…"` runs every policy for each seed with workload seed N and feed seed 100+N, so recal timing varies between seeds but not between policies. Output goes to `results/<policy>/seed<N>/`; `policy/aggregate.py` writes `results/sweep_summary.csv` and `sweep_table.md`, and `policy/plot_sweep.py` writes `results/sweep.png`. PR #4's seed-1 results used the old 10-minute limits and are archived under `results/archive/pr4-week4-reactive/`, not compared.
+
+**Smoke run (seed 1, feed seed 101, RUN_MIN=30, 36×; simulated, x86_64 Docker cluster).** All three runs PASS their checks. The manifest is byte-identical across policies (55 jobs: 19 QPU, 13 hybrid, 23 classical), and all 55 complete in each run. Waits and overlaps are in feed minutes (1 wall s = 0.6 feed min); `results/sweep_table.md` has the full table.
+
+| Metric | static | reactive | predictive |
+|---|---|---|---|
+| Recal-overlap jobs | 2 | 2 | 0 |
+| Recal overlap (feed min) | 69 | 69 | 0 |
+| QPU-only wait median / p95 | 0 / 16.2 | 0 / 81 | 2.4 / 121.8 |
+| Hybrid wait p95 | 1.2 | 6 | 156 |
+| Classical wait p95 | 1.2 | 1.2 | 13.2 |
+| Completion median / p95 | 22.2 / 79.2 | 22.2 / 111.6 | 32.4 / 172.8 |
+| Submit rejections | 0 | 0 | 0 |
+| Gate: jobs held / releases / re-holds | – | – | 7 / 32 / 0 |
+
+What one seed shows:
+- Predictive removed both overlaps: `qpu-033` (42 feed min) and `hybrid-012` (27 feed min) ran into a recal under static and reactive.
+- It pays for this in wait: QPU-only p95 went from 81 to 121.8 feed min and hybrid p95 from 6 to 156, because a job is held until it fits before the next recal.
+- Reactive doesn't reduce overlap relative to static here. Both overlapping jobs were already running when their QPU went out, and reactive only blocks new starts.
+- Classical p95 rose to 13.2 feed min (22 wall s) under predictive. My guess, not checked: released QPU jobs start in bunches and take the CPUs.
+- Makespan is identical (1816 wall s) in all three, because the last job to finish is a late classical arrival.
+- The re-hold path (`gate_rehold`) wasn't triggered in this run.
+- This is one seed, so these are observations, not a result.
+
+**Full sweep estimate:** `make sweep SEEDS="1 2 3 4 5"` is 15 runs at about 36 min each (30 min of arrivals, drain, setup), so about 540 min (9 h). The worst case, if every queue uses its full 15-min drain, is 15 × 47 = 705 min. The seed-1 smoke run took 92 min for three runs (23:20–00:52 UTC), about 31 min per run.
+
 ## 2026-11-18: Reactive up/down loop (HRES-like) on 26.05.2
 
 Everything here is **simulated**: the QPUs are Slurm GRES counters, the jobs run on Aer (CPU), and QPU state comes from the simulated feed.

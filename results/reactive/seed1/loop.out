@@ -1,0 +1,11 @@
+[2026-11-22T23:51:15Z] reactive loop: feed=http://feed:8787 map={'qpu0': 'c1', 'qpu1': 'c2'} interval=10.0s (simulated)
+[2026-11-22T23:57:56Z] feed=2026-11-01T04:01:21Z c1/qpu0 QPU_OUT qpu:1->0 (paused: full recalibration in progress (simulated))
+[2026-11-22T23:59:07Z] feed=2026-11-01T04:43:30Z c2/qpu1 QPU_OUT qpu:1->0 (paused: full recalibration in progress (simulated))
+[2026-11-23T00:00:47Z] feed=2026-11-01T05:43:39Z c1/qpu0 QPU_IN qpu:0->1 (online: calibrated (simulated))
+[2026-11-23T00:00:47Z] feed=2026-11-01T05:43:40Z job 255: BadConstraints after all QPUs were out; hold+release to re-validate
+[2026-11-23T00:01:57Z] feed=2026-11-01T06:25:48Z c2/qpu1 QPU_IN qpu:0->1 (online: calibrated (simulated))
+[2026-11-23T00:10:59Z] feed=2026-11-01T11:50:52Z c1/qpu0 QPU_OUT qpu:1->0 (paused: quick recalibration in progress (simulated))
+[2026-11-23T00:12:09Z] feed=2026-11-01T12:33:01Z c1/qpu0 QPU_IN qpu:0->1 (online: calibrated (simulated))
+[2026-11-23T00:12:29Z] feed=2026-11-01T12:45:03Z c2/qpu1 QPU_OUT qpu:1->0 (paused: quick recalibration in progress (simulated))
+[2026-11-23T00:13:30Z] feed=2026-11-01T13:21:11Z c2/qpu1 QPU_IN qpu:0->1 (online: calibrated (simulated))
+[2026-11-23T00:21:44Z] reactive loop stopped; all QPUs restored
