@@ -45,10 +45,26 @@
 **Early/late split:** 0 overlap from recals that came earlier than published, and 0 from recals that came later, at every N.
 
 **What one seed shows:**
-- **Why there was no overlap.** The gate starts a QPU job only if start + Slurm limit + one poll ≤ published start. An early recal can therefore reach a job only if offset > (limit − actual run time) + poll. The smallest such cushion in these runs was 29.4 feed min (a ~21 s job with a 60 s limit, plus the 6-feed-min poll). The largest early offset that occurred was 18.42 feed min. So no recal in this seed came early enough to reach any job.
-- **The slack comes from the time-limit rule.** `limit = ceil(1.5·hold) + 30 s`, rounded up to whole minutes by Slurm. This experiment shows that slack absorbing forecast errors up to 18 feed min. It doesn't show how predictive behaves when an early offset exceeds the cushion. With N = 60, a draw beyond ~0.49 would be needed; seed 1's four draws are 0.06, −0.03, −0.19 and 0.31.
+- **Why there was no overlap.** The gate starts a QPU job only if start + Slurm limit + one poll ≤ published start. An early recal can therefore reach a job only if offset > (limit − actual run time) + poll.
+  - The smallest such cushion in these runs was 29.4 feed min (a ~21 s job with a 60 s limit, plus the 6-feed-min poll). The largest early offset was 18.42 feed min.
+  - The cushion condition is **necessary, not sufficient**: it's a worst-case bound for a job started at the last moment the gate allows.
+  - The **actual** smallest margin was larger: true start of the next recal on the job's node − job end, over QPU/hybrid jobs.
+    - N = 0 (sweep): 66.8 feed min.
+    - N = 15: 50.2 (`hybrid-008` on c1).
+    - N = 30: 67.8 (`qpu-011` on c2).
+    - N = 60: 67.8 (`qpu-011` on c2).
+  - Job times are converted to feed time via each run's `queue.log`, at sacct's 1 s (= 0.6 feed min) resolution. The row is in `results/forecast_err/table.md`.
+- **The slack comes from the time-limit rule.** `limit = ceil(1.5·hold) + 30 s`, rounded up to whole minutes by Slurm. This experiment shows that slack absorbing forecast errors up to 18 feed min. It doesn't show how predictive behaves when an early offset exceeds the cushion.
+  - With N = 60, a draw beyond ~0.49 would be needed. Seed 1's four in-run draws are 0.06, −0.03, −0.19 and 0.31.
+  - **These draws were small by chance.** `forecast.log` has two recals just after the run's feed end (~18:12–18:15):
+    - qpu0 quick at 18:26:55, u = 0.219.
+    - qpu1 quick at 19:03:14, u = 0.914: +54.85 feed min at N = 60.
+  - A slightly longer run would have included a large early offset.
 - **Waits.** Late recals (offset < 0) can only make the gate hold jobs longer. QPU-only and hybrid p95 stayed within 6 feed min of N = 0 (120.6–124.2 vs 121.8; 150.6–156.6 vs 156). Gate counts were the same at every N (7 kept held, 32 releases, 0 re-holds).
-- **Classical p95** was 21–22.2 feed min at N = 15–60, vs 13.2 at N = 0. That's one job each (classical n = 23, so p95 is the second-largest wait). There's no repeat N = 0 run, so I can't separate this from run-to-run timing variation. Not explained.
+- **Classical p95** was 21–22.2 feed min at N = 15–60, vs 13.2 at N = 0. Classical n = 23, so p95 is the second-largest wait.
+  - The same jobs drive it in all three N > 0 runs: `classical-039` waited 47–49 wall s and `classical-040` 35–37 wall s. At N = 0, they waited 16 s and 4 s.
+  - **This mixes N with session.** The N = 0 run is from the sweep (started 2026-11-23 00:22Z). The N > 0 runs came from a later session, after a container reboot (16:36–17:38Z).
+  - So the difference can't be attributed to N from these runs. A fresh N = 0 control in the same session as new N > 0 runs is the comparison that separates them.
 - **Limits.** This is one seed with four recals. These are observations, not results. Testing offsets beyond the cushion would need more seeds, larger N, or shorter time limits.
 
 ## 2026-11-23: 5-seed sweep (simulated)

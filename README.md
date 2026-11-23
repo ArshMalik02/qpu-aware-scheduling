@@ -62,6 +62,7 @@ All jobs completed in all 15 runs.
 - **p95 is one job here.** p95 is the value at index int(0.95·n), so for n ≤ 20 it equals the maximum. QPU-only n = 12–19 and hybrid n = 5–13 per seed.
 - **The cost of predictive vs reactive varies a lot by seed.** QPU-only wait p95 is 1.5–11× reactive's, hybrid 1.3–109× (the 109× is seed 5, where hybrid n = 5). One multiplier would hide that spread.
 - **Submit rejections aren't comparable across policies:** held submits are accepted while every QPU is out.
+- **Trade:** per seed, the extra QPU+hybrid queue wait predictive adds is 3.9–13.4× the recal overlap it saves vs reactive, and 2–8.7× vs static. That compares QPU-recal minutes with queue-wait minutes; it isn't a cost model. Per-seed numbers: [results/trade_table.md](results/trade_table.md).
 
 ![Recal overlap and QPU-only wait p95 per seed and policy (simulated)](results/sweep.png)
 
