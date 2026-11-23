@@ -1,3 +1,48 @@
+## 2026-11-23: Forecast error at N = 120, seeds 1–5, + fresh N = 0 control (simulated)
+
+**Setup:**
+- **Runs:** predictive with the feed's `FORECAST_ERR_MIN`, workload seed s, feed seed 100+s, RUN_MIN 30, 36×. Run unattended with `policy/run_forecast_err.sh`, which committed and pushed each run as it finished.
+  - A fresh N = 0 control on seed 1: `results/forecast_err/N0/seed1/`.
+  - N = 120 on seeds 1–5: `results/forecast_err/N120/seed<s>/`.
+- **Checks:** all six runs passed, and all jobs completed. Each job manifest is byte-identical to that seed's sweep runs (checked per run; md5s in `runs.log`).
+- **Table:** `results/forecast_err/table.md`. Drift, the recal schedule and job times are assumed.
+
+**N = 120, per seed** (feed min). Waits are p95 for this run, with the seed's predictive N = 0 sweep run in brackets. Recals = in the run / early / early by more than the cushion. A negative actual margin means a job was still running when the recal began (overlap). Trade is vs reactive: saved / extra QPU+hybrid wait / ratio.
+
+| Seed | Overlap jobs / min | From early recals | From late recals | Reactive overlap | Recals | Largest early offset | Smallest actual margin | Cushion | QPU-only p95 | Hybrid p95 | Classical p95 | Gate held / releases / re-holds | Trade vs reactive |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | 0 / 0 | 0 / 0 | 0 / 0 | 69 | 4 / 2 / 1 | 36.83 | 9.3 | 29.4 | 123.6 (121.8) | 156.6 (156) | 14.4 (13.2) | 6 / 32 / 0 | 69 / 822.6 / 11.9 |
+| 2 | 0 / 0 | 0 / 0 | 0 / 0 | 67.2 | 6 / 4 / 3 | 94.33 | 3.6 | 31.8 | 156 (77.4) | 159 (67.2) | 12 (10.8) | 4 / 20 / 1 | 67.2 / 801 / 11.9 |
+| 3 | 2 / 37.8 | 2 / 37.8 | 0 / 0 | 65.4 | 6 / 4 / 2 | 118.63 | -36 | 32.4 | 133.2 (141.6) | 117 (161.4) | 16.2 (10.8) | 3 / 24 / 0 | 27.6 / 772.8 / 28 |
+| 4 | 0 / 0 | 0 / 0 | 0 / 0 | 21 | 6 / 3 / 2 | 111.37 | 5.8 | 30.6 | 15.6 (33) | 23.4 (23.4) | 1.8 (1.8) | 2 / 27 / 0 | 21 / 91.2 / 4.3 |
+| 5 | 0 / 0 | 0 / 0 | 0 / 0 | 96.6 | 6 / 4 / 3 | 75.3 | 13.2 | 31.2 | 70.2 (175.8) | 130.2 (130.8) | 5.4 (1.8) | 2 / 21 / 0 | 96.6 / 246.6 / 2.6 |
+
+**Seed 1, three runs** (QPU-only / hybrid / classical wait p95, feed min; the sweep run is from an earlier session, the other two from this one):
+- N = 0 sweep run: 121.8 / 156 / 13.2.
+- Fresh N = 0 control: 121.2 / 150.6 / 20.4.
+- N = 120: 123.6 / 156.6 / 14.4.
+
+**What these runs show** (observations, five seeds at one N):
+- **Overlap at N = 120.**
+  - Overlap occurred in 1 of 5 seeds: seed 3, 2 jobs, 37.8 feed min. Reactive had 65.4 on that seed.
+  - Both of seed 3's jobs (`qpu-014`, `qpu-036`, on c2) were already running when a recal came earlier than published, by +102.23 and +118.63 feed min. Neither started inside a recal window.
+  - Recals that came later than published caused no overlap in any seed.
+- **The cushion is necessary, not sufficient.**
+  - 11 in-run recals came early by more than the run's worst-case cushion (29.4–32.4 feed min). Only 2 of them (both seed 3) caused overlap.
+  - In the others, no QPU/hybrid job was running close enough to the true start. Example: seed 2's qpu1 recal, 94 feed min early, came 224 feed min after the last QPU/hybrid job on c2 ended.
+  - Near misses: smallest actual margins of 3.6 (seed 2), 5.8 (seed 4) and 9.3 feed min (seed 1).
+- **Waits move both ways vs the sweep's N = 0 runs.**
+  - QPU-only p95 was higher at N = 120 in seed 2 (156 vs 77.4) and lower in seeds 3–5.
+  - Hybrid p95 was higher in seed 2 (159 vs 67.2) and lower in seed 3 (117 vs 161.4).
+  - Seed 2 had two recals published 50 and 105 feed min before they began, which makes the gate hold jobs longer. That's consistent with its higher waits, but not separated from other causes.
+- **Trade vs reactive ranged from 2.6 to 28** across seeds at N = 120. Seed 3's 28 is because its saved overlap fell to 27.6.
+- **Session and run-to-run variation (classical waits).**
+  - The fresh N = 0 control's classical p95 is 20.4 feed min, and `classical-039` / `-040` waited 45 / 34 wall s. That's close to the N = 15–60 runs (21–22.2; 47–49 / 35–37 s), not to the sweep's N = 0 run (13.2; 16 / 4 s). So the earlier N = 0 vs N > 0 difference can't be put down to N.
+  - In this same session, with the same manifest, N = 120 seed 1 had classical p95 14.4, and those two jobs waited 17 / 6 s.
+  - So these two jobs' waits differ by about 30 s between runs, and from these runs neither N nor session alone accounts for it.
+  - Wait and trade comparisons between N = 120 and the sweep's N = 0 runs mix N with session for seeds 2–5. Only seed 1 has a same-session N = 0 control.
+- **Limits.** One N, five seeds, 4–6 recals per run. These are observations, not results.
+
 ## 2026-11-23: Forecast-error experiment (simulated, one seed)
 
 **Why:** in the 5-seed sweep, the predictive policy read the exact recal start, so its 0 overlap held by construction. This asks what happens when the published start is wrong.
