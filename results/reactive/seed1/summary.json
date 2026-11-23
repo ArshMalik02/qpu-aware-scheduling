@@ -1,160 +1,246 @@
 {
   "simulated": true,
   "run_config": {
+    "policy": "reactive",
     "seed": 1,
-    "feed_seed": 42,
+    "feed_seed": 101,
     "feed_speed": 36,
-    "run_min": 20,
+    "run_min": 30,
     "rate_per_min": 1.5,
     "poll_interval_s": 10,
     "map": "qpu0=c1,qpu1=c2",
-    "start_utc": "2026-11-18T22:40:32",
+    "start_utc": "2026-11-22T23:51:15",
     "simulated": true
   },
   "units": "wall_s = wall-clock seconds; feed_min = wall_s * feed_speed / 60 (simulated feed minutes)",
   "jobs_by_type": {
-    "qpu": 12,
-    "hybrid": 8,
-    "classical": 15
+    "qpu": 19,
+    "hybrid": 13,
+    "classical": 23
   },
   "states": {
-    "COMPLETED": 35
+    "COMPLETED": 55
   },
   "qpu_wait": {
     "qpu": {
-      "n": 12,
+      "n": 19,
       "wall_s": {
-        "mean": 21.2,
+        "mean": 9.8,
         "median": 0.0,
-        "p95": 86.0,
-        "max": 86.0
+        "p95": 135.0,
+        "max": 135.0
       },
       "feed_min": {
-        "mean": 12.7,
+        "mean": 5.9,
         "median": 0.0,
-        "p95": 51.6,
-        "max": 51.6
+        "p95": 81.0,
+        "max": 81.0
       }
     },
     "hybrid": {
-      "n": 8,
+      "n": 13,
       "wall_s": {
-        "mean": 1.3,
+        "mean": 1.9,
         "median": 0.0,
-        "p95": 5.0,
-        "max": 5.0
+        "p95": 10.0,
+        "max": 10.0
       },
       "feed_min": {
-        "mean": 0.8,
+        "mean": 1.1,
         "median": 0.0,
-        "p95": 3.0,
-        "max": 3.0
+        "p95": 6.0,
+        "max": 6.0
       }
     }
   },
   "classical_queue_wait": {
-    "n": 15,
+    "n": 23,
     "wall_s": {
-      "mean": 1.7,
+      "mean": 0.4,
       "median": 0.0,
-      "p95": 11.0,
-      "max": 11.0
+      "p95": 2.0,
+      "max": 2.0
     },
     "feed_min": {
-      "mean": 1.0,
+      "mean": 0.2,
       "median": 0.0,
-      "p95": 6.6,
-      "max": 6.6
+      "p95": 1.2,
+      "max": 1.2
     }
   },
-  "rejected_at_submit_all_qpus_out": [
-    {
-      "job_id": "151",
-      "name": "hybrid-012",
-      "submit_delay_s": 5.01,
-      "submit_delay_feed_min": 3.0
+  "completion": {
+    "qpu": {
+      "n": 19,
+      "wall_s": {
+        "mean": 42.1,
+        "median": 27.0,
+        "p95": 194.0,
+        "max": 194.0
+      },
+      "feed_min": {
+        "mean": 25.2,
+        "median": 16.2,
+        "p95": 116.4,
+        "max": 116.4
+      }
+    },
+    "hybrid": {
+      "n": 13,
+      "wall_s": {
+        "mean": 52.1,
+        "median": 24.0,
+        "p95": 186.0,
+        "max": 186.0
+      },
+      "feed_min": {
+        "mean": 31.3,
+        "median": 14.4,
+        "p95": 111.6,
+        "max": 111.6
+      }
+    },
+    "classical": {
+      "n": 23,
+      "wall_s": {
+        "mean": 65.3,
+        "median": 45.0,
+        "p95": 119.0,
+        "max": 241.0
+      },
+      "feed_min": {
+        "mean": 39.2,
+        "median": 27.0,
+        "p95": 71.4,
+        "max": 144.6
+      }
     }
-  ],
+  },
+  "completion_all": {
+    "n": 55,
+    "wall_s": {
+      "mean": 54.1,
+      "median": 37.0,
+      "p95": 186.0,
+      "max": 241.0
+    },
+    "feed_min": {
+      "mean": 32.5,
+      "median": 22.2,
+      "p95": 111.6,
+      "max": 144.6
+    }
+  },
+  "makespan": {
+    "wall_s": 1816.0,
+    "feed_min": 1089.6
+  },
+  "jobs_total": 55,
+  "jobs_completed": 55,
+  "submit_rejections": 0,
+  "gate": {
+    "jobs_kept_held": 0,
+    "releases": 0,
+    "reholds": 0,
+    "excludes_updated": 0
+  },
+  "rejected_at_submit_all_qpus_out": [],
   "recal_overlap": {
-    "count": 1,
+    "count": 2,
     "jobs": [
       {
-        "job_id": "171",
-        "name": "hybrid-032",
+        "job_id": "253",
+        "name": "hybrid-012",
         "type": "hybrid",
         "node": "c2",
-        "qpu_out_at": "2026-11-18T22:59:56Z",
-        "overlap_wall_s": 55.0,
-        "overlap_feed_min": 33.0
+        "qpu_out_at": [
+          "2026-11-22T23:59:07Z"
+        ],
+        "started_inside_window": false,
+        "overlap_wall_s": 45.0,
+        "overlap_feed_min": 27.0
+      },
+      {
+        "job_id": "274",
+        "name": "qpu-033",
+        "type": "qpu",
+        "node": "c1",
+        "qpu_out_at": [
+          "2026-11-23T00:10:59Z"
+        ],
+        "started_inside_window": false,
+        "overlap_wall_s": 70.0,
+        "overlap_feed_min": 42.0
       }
     ],
-    "total_overlap_wall_s": 55.0,
-    "total_overlap_feed_min": 33.0
+    "total_overlap_wall_s": 115.0,
+    "total_overlap_feed_min": 69.0
   },
-  "rechecks_badconstraints": [],
+  "rechecks_badconstraints": [
+    "255"
+  ],
   "transitions": {
-    "QPU_OUT": 5,
-    "QPU_IN": 5
+    "QPU_OUT": 4,
+    "QPU_IN": 4
   },
-  "polls": 127,
-  "polls_with_qpu_out": 49,
+  "polls": 183,
+  "polls_with_qpu_out": 37,
   "qpu_job_pending_while_qpu_out": {
-    "count": 21,
+    "count": 10,
     "first": [
       {
-        "wall": "2026-11-18T22:45:03Z",
-        "feed_time": "2026-11-01T02:42:52Z",
+        "wall": "2026-11-22T23:58:37Z",
+        "feed_time": "2026-11-01T04:25:26Z",
         "qpus_out_on": [
           "c1"
         ],
-        "job": "144",
-        "name": "qpu-006",
+        "job": "255",
+        "name": "qpu-014",
         "reason": "Resources"
       },
       {
-        "wall": "2026-11-18T22:45:13Z",
-        "feed_time": "2026-11-01T02:48:53Z",
+        "wall": "2026-11-22T23:58:47Z",
+        "feed_time": "2026-11-01T04:31:27Z",
         "qpus_out_on": [
           "c1"
         ],
-        "job": "144",
-        "name": "qpu-006",
+        "job": "255",
+        "name": "qpu-014",
         "reason": "Resources"
       },
       {
-        "wall": "2026-11-18T22:45:23Z",
-        "feed_time": "2026-11-01T02:54:55Z",
+        "wall": "2026-11-22T23:58:57Z",
+        "feed_time": "2026-11-01T04:37:29Z",
         "qpus_out_on": [
           "c1"
         ],
-        "job": "144",
-        "name": "qpu-006",
+        "job": "255",
+        "name": "qpu-014",
         "reason": "Resources"
       }
     ]
   },
   "classical_running_on_qpu_out_node": {
-    "count": 3,
+    "count": 18,
     "first": [
       {
-        "wall": "2026-11-18T22:48:54Z",
-        "feed_time": "2026-11-01T05:01:17Z",
+        "wall": "2026-11-22T23:59:07Z",
+        "feed_time": "2026-11-01T04:43:30Z",
         "node": "c2",
-        "job": "154",
-        "name": "classical-015"
+        "job": "254",
+        "name": "classical-013"
       },
       {
-        "wall": "2026-11-18T22:49:04Z",
-        "feed_time": "2026-11-01T05:07:18Z",
+        "wall": "2026-11-22T23:59:17Z",
+        "feed_time": "2026-11-01T04:49:31Z",
         "node": "c2",
-        "job": "154",
-        "name": "classical-015"
+        "job": "254",
+        "name": "classical-013"
       },
       {
-        "wall": "2026-11-18T22:49:14Z",
-        "feed_time": "2026-11-01T05:13:19Z",
+        "wall": "2026-11-22T23:59:27Z",
+        "feed_time": "2026-11-01T04:55:32Z",
         "node": "c2",
-        "job": "154",
+        "job": "256",
         "name": "classical-015"
       }
     ]

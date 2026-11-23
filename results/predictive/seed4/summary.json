@@ -1,0 +1,227 @@
+{
+  "simulated": true,
+  "run_config": {
+    "policy": "predictive",
+    "seed": 4,
+    "feed_seed": 104,
+    "feed_speed": 36,
+    "run_min": 30,
+    "rate_per_min": 1.5,
+    "poll_interval_s": 10,
+    "map": "qpu0=c1,qpu1=c2",
+    "start_utc": "2026-11-23T12:10:41",
+    "simulated": true
+  },
+  "units": "wall_s = wall-clock seconds; feed_min = wall_s * feed_speed / 60 (simulated feed minutes)",
+  "jobs_by_type": {
+    "qpu": 17,
+    "hybrid": 10,
+    "classical": 12
+  },
+  "states": {
+    "COMPLETED": 39
+  },
+  "qpu_wait": {
+    "qpu": {
+      "n": 17,
+      "wall_s": {
+        "mean": 9.6,
+        "median": 3.0,
+        "p95": 55.0,
+        "max": 55.0
+      },
+      "feed_min": {
+        "mean": 5.8,
+        "median": 1.8,
+        "p95": 33.0,
+        "max": 33.0
+      }
+    },
+    "hybrid": {
+      "n": 10,
+      "wall_s": {
+        "mean": 11.8,
+        "median": 3.5,
+        "p95": 39.0,
+        "max": 39.0
+      },
+      "feed_min": {
+        "mean": 7.1,
+        "median": 2.1,
+        "p95": 23.4,
+        "max": 23.4
+      }
+    }
+  },
+  "classical_queue_wait": {
+    "n": 12,
+    "wall_s": {
+      "mean": 0.3,
+      "median": 0.0,
+      "p95": 3.0,
+      "max": 3.0
+    },
+    "feed_min": {
+      "mean": 0.2,
+      "median": 0.0,
+      "p95": 1.8,
+      "max": 1.8
+    }
+  },
+  "completion": {
+    "qpu": {
+      "n": 17,
+      "wall_s": {
+        "mean": 52.3,
+        "median": 34.0,
+        "p95": 244.0,
+        "max": 244.0
+      },
+      "feed_min": {
+        "mean": 31.4,
+        "median": 20.4,
+        "p95": 146.4,
+        "max": 146.4
+      }
+    },
+    "hybrid": {
+      "n": 10,
+      "wall_s": {
+        "mean": 66.7,
+        "median": 34.5,
+        "p95": 198.0,
+        "max": 198.0
+      },
+      "feed_min": {
+        "mean": 40.0,
+        "median": 20.7,
+        "p95": 118.8,
+        "max": 118.8
+      }
+    },
+    "classical": {
+      "n": 12,
+      "wall_s": {
+        "mean": 60.3,
+        "median": 41.5,
+        "p95": 188.0,
+        "max": 188.0
+      },
+      "feed_min": {
+        "mean": 36.2,
+        "median": 24.9,
+        "p95": 112.8,
+        "max": 112.8
+      }
+    }
+  },
+  "completion_all": {
+    "n": 39,
+    "wall_s": {
+      "mean": 58.5,
+      "median": 34.0,
+      "p95": 198.0,
+      "max": 244.0
+    },
+    "feed_min": {
+      "mean": 35.1,
+      "median": 20.4,
+      "p95": 118.8,
+      "max": 146.4
+    }
+  },
+  "makespan": {
+    "wall_s": 2024.0,
+    "feed_min": 1214.4
+  },
+  "jobs_total": 39,
+  "jobs_completed": 39,
+  "submit_rejections": 0,
+  "gate": {
+    "jobs_kept_held": 2,
+    "releases": 27,
+    "reholds": 0,
+    "excludes_updated": 1
+  },
+  "rejected_at_submit_all_qpus_out": [],
+  "recal_overlap": {
+    "count": 0,
+    "jobs": [],
+    "total_overlap_wall_s": 0,
+    "total_overlap_feed_min": 0.0
+  },
+  "rechecks_badconstraints": [],
+  "transitions": {
+    "QPU_OUT": 7,
+    "QPU_IN": 7
+  },
+  "polls": 202,
+  "polls_with_qpu_out": 60,
+  "qpu_job_pending_while_qpu_out": {
+    "count": 9,
+    "first": [
+      {
+        "wall": "2026-11-23T12:13:03Z",
+        "feed_time": "2026-11-01T01:25:49Z",
+        "qpus_out_on": [
+          "c1"
+        ],
+        "job": "688",
+        "name": "qpu-004",
+        "reason": "Resources"
+      },
+      {
+        "wall": "2026-11-23T12:13:13Z",
+        "feed_time": "2026-11-01T01:31:54Z",
+        "qpus_out_on": [
+          "c1"
+        ],
+        "job": "688",
+        "name": "qpu-004",
+        "reason": "Resources"
+      },
+      {
+        "wall": "2026-11-23T12:13:23Z",
+        "feed_time": "2026-11-01T01:37:58Z",
+        "qpus_out_on": [
+          "c1"
+        ],
+        "job": "688",
+        "name": "qpu-004",
+        "reason": "Resources"
+      }
+    ]
+  },
+  "classical_running_on_qpu_out_node": {
+    "count": 16,
+    "first": [
+      {
+        "wall": "2026-11-23T12:15:25Z",
+        "feed_time": "2026-11-01T02:50:45Z",
+        "node": "c2",
+        "job": "689",
+        "name": "classical-005"
+      },
+      {
+        "wall": "2026-11-23T12:15:35Z",
+        "feed_time": "2026-11-01T02:56:50Z",
+        "node": "c2",
+        "job": "689",
+        "name": "classical-005"
+      },
+      {
+        "wall": "2026-11-23T12:15:45Z",
+        "feed_time": "2026-11-01T03:02:54Z",
+        "node": "c2",
+        "job": "689",
+        "name": "classical-005"
+      }
+    ]
+  },
+  "checks": {
+    "0_all_jobs_completed": true,
+    "1_qpu_taken_out_and_restored": true,
+    "2_qpu_job_pending_while_qpu_out": true,
+    "3_classical_running_on_qpu_out_node": true
+  }
+}

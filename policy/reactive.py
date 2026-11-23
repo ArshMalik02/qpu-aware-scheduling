@@ -89,6 +89,8 @@ class Loop:
         # Lets other policies (e.g. static) record QPU_OUT/QPU_IN identically for comparison.
         self.observe_only = a.observe_only
         self.shadow: dict[str, int] = {}
+        # Last feed state per QPU and the monotonic time it was read (used by subclasses).
+        self.last_state: dict[str, tuple[dict, float]] = {}
         self.deadline = time.monotonic() + a.duration_s if a.duration_s else None
         out = Path(a.out_dir)
         out.mkdir(parents=True, exist_ok=True)
@@ -119,6 +121,7 @@ class Loop:
                 counts[node] = node_qpus(node)
                 continue
             feed_time = st.get("updated_at")
+            self.last_state[qpu] = (st, time.monotonic())
             want = 1 if (st.get("status") == "online" and st.get("healthy") is not False) else 0
             have = self.shadow.get(node, 1) if self.observe_only else node_qpus(node)
             if want != have:
@@ -151,6 +154,9 @@ class Loop:
                 set_qpus(node, 1)
                 self.log_transition(node, qpu, have, 1, None, "loop exit: restore")
 
+    def idle(self) -> None:
+        """Called about every 0.2 s between polls; subclasses (predictive) hook in here."""
+
     def run(self) -> None:
         def _stop(*_):
             self.stop = True
@@ -163,6 +169,7 @@ class Loop:
                 self.tick()
                 end = time.monotonic() + self.interval
                 while not self.stop and time.monotonic() < end:
+                    self.idle()
                     time.sleep(0.2)
         finally:
             self.restore_all()

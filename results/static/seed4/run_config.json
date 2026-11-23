@@ -1,0 +1,1 @@
+{"policy": "static", "seed": 4, "feed_seed": 104, "feed_speed": 36, "run_min": 30, "rate_per_min": 1.5, "poll_interval_s": 10, "map": "qpu0=c1,qpu1=c2", "start_utc": "2026-11-23T11:02:04", "simulated": true}

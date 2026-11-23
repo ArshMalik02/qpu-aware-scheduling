@@ -63,37 +63,79 @@ def stats(xs: list, speed: float) -> dict | None:
             "feed_min": {k: feed_min(v, speed) for k, v in w.items()}}
 
 
-def recal_overlap(jobs: list[dict], transitions: list[dict], speed: float, run_end: datetime) -> dict:
-    """QPU/hybrid jobs RUNNING on a node at the moment its QPU went out (QPU_OUT).
-
-    For each QPU_OUT on node N at time T, every QPU or hybrid job on N with start <= T < end
-    counts. Its overlap is min(end, next QPU_IN on N) - T: how long it kept using a QPU that
-    the feed said was recalibrating. Event times are the poll times in transitions.log, so
-    the up-to-one-poll lag is the same for every policy that logs them the same way.
-    """
+def recal_windows(transitions: list[dict], run_end: datetime) -> dict[str, list[tuple[datetime, datetime]]]:
+    """Per node, the [QPU_OUT, next QPU_IN) windows from transitions.log (no QPU_IN -> run end)."""
     by_node: dict[str, list[tuple[datetime, str]]] = {}
     for t in transitions:
         if "action" in t and ts(t.get("wall")):
             by_node.setdefault(t["node"], []).append((ts(t["wall"]), t["action"]))
-    hits = []
+    windows: dict[str, list[tuple[datetime, datetime]]] = {}
     for node, evs in by_node.items():
         evs.sort()
         for i, (t_out, action) in enumerate(evs):
             if action != "QPU_OUT":
                 continue
             t_in = next((t for t, a in evs[i + 1:] if a == "QPU_IN"), run_end)
-            for j in jobs:
-                if j["type"] == "classical" or j["node"] != node:
-                    continue
-                start, end = ts(j["start"]), ts(j["end"])
-                if start and end and start <= t_out < end:
-                    ov = (min(end, t_in) - t_out).total_seconds()
-                    hits.append({"job_id": j["job_id"], "name": j["name"], "type": j["type"],
-                                 "node": node, "qpu_out_at": t_out.isoformat() + "Z",
-                                 "overlap_wall_s": round(ov, 1), "overlap_feed_min": feed_min(ov, speed)})
+            windows.setdefault(node, []).append((t_out, t_in))
+    return windows
+
+
+def recal_overlap(jobs: list[dict], transitions: list[dict], speed: float, run_end: datetime) -> dict:
+    """QPU/hybrid jobs whose run overlapped a recal window on their node.
+
+    A window is [QPU_OUT, next QPU_IN) on node N (no QPU_IN -> run end). A QPU or hybrid job
+    on N overlaps by |[start, end) ∩ window|, summed over every window: how long it used a
+    QPU that the feed said was recalibrating. This counts jobs already running at QPU_OUT
+    and jobs that start during the window (which only a policy that doesn't take QPUs out,
+    e.g. static, lets happen). Event times are the poll times in transitions.log, so the
+    up-to-one-poll lag is the same for every policy that logs them the same way.
+    """
+    windows = recal_windows(transitions, run_end)
+    hits = []
+    for j in jobs:
+        if j["type"] == "classical":
+            continue
+        start, end = ts(j["start"]), ts(j["end"])
+        if not (start and end):
+            continue
+        parts = []
+        for w_out, w_in in windows.get(j["node"], []):
+            ov = (min(end, w_in) - max(start, w_out)).total_seconds()
+            if ov > 0:
+                parts.append((w_out, ov))
+        if parts:
+            ov = sum(o for _, o in parts)
+            hits.append({"job_id": j["job_id"], "name": j["name"], "type": j["type"], "node": j["node"],
+                         "qpu_out_at": [w.isoformat() + "Z" for w, _ in parts],
+                         "started_inside_window": any(w_out <= start < w_in for w_out, w_in in windows.get(j["node"], [])),
+                         "overlap_wall_s": round(ov, 1), "overlap_feed_min": feed_min(ov, speed)})
     total = sum(h["overlap_wall_s"] for h in hits)
     return {"count": len(hits), "jobs": hits,
             "total_overlap_wall_s": round(total, 1), "total_overlap_feed_min": feed_min(total, speed)}
+
+
+def _makespan(jobs: list[dict], speed: float) -> dict | None:
+    subs = [ts(j["submit"]) for j in jobs if ts(j["submit"])]
+    ends = [ts(j["end"]) for j in jobs if ts(j["end"])]
+    if not subs or not ends:
+        return None
+    w = (max(ends) - min(subs)).total_seconds()
+    return {"wall_s": round(w, 1), "feed_min": feed_min(w, speed)}
+
+
+def _gate_counts(events: list[dict]) -> dict:
+    """Predictive gate events (empty counts for other policies).
+
+    Every QPU job is submitted held, so "held" alone means nothing. jobs_kept_held counts the
+    jobs the gate kept held at least once: it found no fitting QPU at its first look
+    (gate_hold), or it re-held them after release (gate_rehold).
+    """
+    g = [e for e in events if str(e.get("event", "")).startswith("gate_")]
+    held = {e["job"] for e in g if e["event"] in ("gate_hold", "gate_rehold")}
+    return {"jobs_kept_held": len(held),
+            "releases": sum(e["event"] == "gate_release" for e in g),
+            "reholds": sum(e["event"] == "gate_rehold" for e in g),
+            "excludes_updated": sum(e["event"] == "gate_exclude" for e in g)}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -118,9 +160,12 @@ def main(argv: list[str] | None = None) -> int:
         delay = rec.get("submit_delay_s", 0.0)
         # QPU wait = time sbatch kept rejecting it (no QPU configured anywhere) + queue wait.
         qwait = round(delay + wait, 2) if wait is not None else None
+        end = ts(r["End"])
+        # Completion = end - intended arrival (submit time minus any submit-rejection delay).
+        comp = round((end - sub).total_seconds() + delay, 2) if end and sub and r["State"] == "COMPLETED" else None
         jobs.append({"job_id": r["JobID"], "name": r["JobName"], "type": kind,
                      "state": r["State"], "node": r["NodeList"], "submit": r["Submit"],
-                     "start": r["Start"], "end": r["End"],
+                     "start": r["Start"], "end": r["End"], "completion_s": comp,
                      "submit_delay_s": delay, "queue_wait_s": wait,
                      "qpu_wait_s": qwait if kind != "classical" else "",
                      "qpu_wait_feed_min": feed_min(qwait, speed) if kind != "classical" and qwait is not None else ""})
@@ -159,6 +204,14 @@ def main(argv: list[str] | None = None) -> int:
         "states": {s: sum(j["state"] == s for j in jobs) for s in sorted({j["state"] for j in jobs})},
         "qpu_wait": {k: stats([j["qpu_wait_s"] for j in jobs if j["type"] == k], speed) for k in ("qpu", "hybrid")},
         "classical_queue_wait": stats([j["queue_wait_s"] for j in jobs if j["type"] == "classical"], speed),
+        "completion": {k: stats([j["completion_s"] for j in jobs if j["type"] == k], speed)
+                       for k in ("qpu", "hybrid", "classical")},
+        "completion_all": stats([j["completion_s"] for j in jobs], speed),
+        "makespan": _makespan(jobs, speed),
+        "jobs_total": len(jobs),
+        "jobs_completed": sum(j["state"] == "COMPLETED" for j in jobs),
+        "submit_rejections": sum(1 for j in jobs if j["submit_delay_s"] and j["submit_delay_s"] > 1),
+        "gate": _gate_counts(load_jsonl(d / "transitions.log")),
         "rejected_at_submit_all_qpus_out": [
             {"job_id": j["job_id"], "name": j["name"], "submit_delay_s": j["submit_delay_s"],
              "submit_delay_feed_min": feed_min(j["submit_delay_s"], speed)}
@@ -173,18 +226,24 @@ def main(argv: list[str] | None = None) -> int:
         "qpu_job_pending_while_qpu_out": {"count": len(pending_examples), "first": pending_examples[:3]},
         "classical_running_on_qpu_out_node": {"count": len(running_examples), "first": running_examples[:3]},
     }
+    policy = cfg.get("policy", "reactive")
     checks = {
         "0_all_jobs_completed": bool(jobs) and all(j["state"] == "COMPLETED" for j in jobs),
+        # static only observes the recal windows (reactive.py --observe-only), so check 1
+        # means "windows were observed" there, and 2-3 (QPU actually taken out) don't apply.
         "1_qpu_taken_out_and_restored": summary["transitions"]["QPU_OUT"] > 0 and summary["transitions"]["QPU_IN"] > 0,
-        "2_qpu_job_pending_while_qpu_out": len(pending_examples) > 0,
-        "3_classical_running_on_qpu_out_node": len(running_examples) > 0,
     }
+    if policy != "static":
+        checks["2_qpu_job_pending_while_qpu_out"] = len(pending_examples) > 0
+        checks["3_classical_running_on_qpu_out_node"] = len(running_examples) > 0
     summary["checks"] = checks
     (d / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
 
     print(json.dumps({k: summary[k] for k in ("jobs_by_type", "states", "transitions", "qpu_wait",
-                                              "classical_queue_wait", "rejected_at_submit_all_qpus_out",
-                                              "recal_overlap", "rechecks_badconstraints")}, indent=2))
+                                              "classical_queue_wait", "completion_all", "makespan",
+                                              "rejected_at_submit_all_qpus_out", "recal_overlap",
+                                              "rechecks_badconstraints", "gate")}, indent=2))
+    print(f"    policy: {policy}")
     for k, v in checks.items():
         print(f"    {k}: {'ok' if v else 'NO'}")
     ok = all(checks.values())

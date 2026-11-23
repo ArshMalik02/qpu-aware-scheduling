@@ -1,0 +1,204 @@
+{"wall": "2026-11-23T11:36:23Z", "feed_time": "2026-11-01T00:00:42Z", "qpus": {"c1": 1, "c2": 0}, "queue": []}
+{"wall": "2026-11-23T11:36:33Z", "feed_time": "2026-11-01T00:06:43Z", "qpus": {"c1": 1, "c2": 0}, "queue": []}
+{"wall": "2026-11-23T11:36:43Z", "feed_time": "2026-11-01T00:12:45Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["645|qpu-001|PENDING|Resources|gres/qpu:1|", "644|qpu-000|RUNNING|None|gres/qpu:1|c1"]}
+{"wall": "2026-11-23T11:36:53Z", "feed_time": "2026-11-01T00:18:46Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["645|qpu-001|RUNNING|None|gres/qpu:1|c2", "644|qpu-000|RUNNING|None|gres/qpu:1|c1"]}
+{"wall": "2026-11-23T11:37:03Z", "feed_time": "2026-11-01T00:24:47Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["645|qpu-001|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T11:37:13Z", "feed_time": "2026-11-01T00:30:49Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T11:37:23Z", "feed_time": "2026-11-01T00:36:50Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T11:37:33Z", "feed_time": "2026-11-01T00:42:52Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T11:37:43Z", "feed_time": "2026-11-01T00:48:53Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T11:37:53Z", "feed_time": "2026-11-01T00:54:55Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T11:38:03Z", "feed_time": "2026-11-01T01:00:56Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T11:38:13Z", "feed_time": "2026-11-01T01:06:58Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T11:38:23Z", "feed_time": "2026-11-01T01:12:59Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["646|classical-002|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:38:33Z", "feed_time": "2026-11-01T01:19:00Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["647|hybrid-003|RUNNING|None|gres/qpu:1|c2", "646|classical-002|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:38:43Z", "feed_time": "2026-11-01T01:25:02Z", "qpus": {"c1": 0, "c2": 1}, "queue": ["648|qpu-004|RUNNING|None|gres/qpu:1|c1", "647|hybrid-003|RUNNING|None|gres/qpu:1|c2", "646|classical-002|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:38:53Z", "feed_time": "2026-11-01T01:31:03Z", "qpus": {"c1": 0, "c2": 1}, "queue": ["647|hybrid-003|RUNNING|None|gres/qpu:1|c2", "646|classical-002|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:39:03Z", "feed_time": "2026-11-01T01:37:04Z", "qpus": {"c1": 0, "c2": 1}, "queue": ["647|hybrid-003|RUNNING|None|gres/qpu:1|c2", "646|classical-002|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:39:13Z", "feed_time": "2026-11-01T01:43:06Z", "qpus": {"c1": 0, "c2": 1}, "queue": ["646|classical-002|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:39:23Z", "feed_time": "2026-11-01T01:49:07Z", "qpus": {"c1": 0, "c2": 1}, "queue": ["646|classical-002|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:39:33Z", "feed_time": "2026-11-01T01:55:08Z", "qpus": {"c1": 0, "c2": 1}, "queue": ["646|classical-002|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:39:43Z", "feed_time": "2026-11-01T02:01:10Z", "qpus": {"c1": 0, "c2": 1}, "queue": ["646|classical-002|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:39:53Z", "feed_time": "2026-11-01T02:07:11Z", "qpus": {"c1": 0, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T11:40:03Z", "feed_time": "2026-11-01T02:13:13Z", "qpus": {"c1": 0, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T11:40:13Z", "feed_time": "2026-11-01T02:19:14Z", "qpus": {"c1": 0, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T11:40:24Z", "feed_time": "2026-11-01T02:25:16Z", "qpus": {"c1": 0, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T11:40:34Z", "feed_time": "2026-11-01T02:31:17Z", "qpus": {"c1": 0, "c2": 1}, "queue": ["649|classical-005|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:40:44Z", "feed_time": "2026-11-01T02:37:19Z", "qpus": {"c1": 0, "c2": 1}, "queue": ["649|classical-005|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:40:54Z", "feed_time": "2026-11-01T02:43:20Z", "qpus": {"c1": 0, "c2": 1}, "queue": ["649|classical-005|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:41:04Z", "feed_time": "2026-11-01T02:49:22Z", "qpus": {"c1": 0, "c2": 0}, "queue": ["649|classical-005|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:41:14Z", "feed_time": "2026-11-01T02:55:23Z", "qpus": {"c1": 0, "c2": 0}, "queue": ["649|classical-005|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:41:24Z", "feed_time": "2026-11-01T03:01:24Z", "qpus": {"c1": 0, "c2": 0}, "queue": ["649|classical-005|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:41:34Z", "feed_time": "2026-11-01T03:07:26Z", "qpus": {"c1": 1, "c2": 0}, "queue": ["649|classical-005|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:41:44Z", "feed_time": "2026-11-01T03:13:27Z", "qpus": {"c1": 1, "c2": 0}, "queue": ["651|qpu-006|RUNNING|None|gres/qpu:1|c1", "649|classical-005|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:41:54Z", "feed_time": "2026-11-01T03:19:29Z", "qpus": {"c1": 1, "c2": 0}, "queue": ["649|classical-005|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:42:04Z", "feed_time": "2026-11-01T03:25:30Z", "qpus": {"c1": 1, "c2": 0}, "queue": ["649|classical-005|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:42:14Z", "feed_time": "2026-11-01T03:31:31Z", "qpus": {"c1": 1, "c2": 0}, "queue": ["652|classical-007|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:42:24Z", "feed_time": "2026-11-01T03:37:33Z", "qpus": {"c1": 1, "c2": 0}, "queue": ["652|classical-007|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:42:34Z", "feed_time": "2026-11-01T03:43:34Z", "qpus": {"c1": 1, "c2": 0}, "queue": ["652|classical-007|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:42:44Z", "feed_time": "2026-11-01T03:49:35Z", "qpus": {"c1": 1, "c2": 0}, "queue": ["652|classical-007|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:42:54Z", "feed_time": "2026-11-01T03:55:37Z", "qpus": {"c1": 1, "c2": 0}, "queue": ["652|classical-007|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:43:04Z", "feed_time": "2026-11-01T04:01:38Z", "qpus": {"c1": 1, "c2": 0}, "queue": ["652|classical-007|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:43:14Z", "feed_time": "2026-11-01T04:07:39Z", "qpus": {"c1": 1, "c2": 0}, "queue": ["652|classical-007|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:43:24Z", "feed_time": "2026-11-01T04:13:41Z", "qpus": {"c1": 1, "c2": 0}, "queue": ["652|classical-007|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:43:34Z", "feed_time": "2026-11-01T04:19:42Z", "qpus": {"c1": 1, "c2": 0}, "queue": ["653|qpu-008|RUNNING|None|gres/qpu:1|c1", "652|classical-007|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:43:44Z", "feed_time": "2026-11-01T04:25:43Z", "qpus": {"c1": 1, "c2": 0}, "queue": ["653|qpu-008|RUNNING|None|gres/qpu:1|c1", "652|classical-007|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:43:54Z", "feed_time": "2026-11-01T04:31:45Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["653|qpu-008|RUNNING|None|gres/qpu:1|c1", "652|classical-007|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:44:04Z", "feed_time": "2026-11-01T04:37:46Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["653|qpu-008|RUNNING|None|gres/qpu:1|c1", "652|classical-007|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:44:14Z", "feed_time": "2026-11-01T04:43:48Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["653|qpu-008|RUNNING|None|gres/qpu:1|c1"]}
+{"wall": "2026-11-23T11:44:24Z", "feed_time": "2026-11-01T04:49:49Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["654|hybrid-009|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T11:44:34Z", "feed_time": "2026-11-01T04:55:51Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["654|hybrid-009|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T11:44:45Z", "feed_time": "2026-11-01T05:01:52Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["655|qpu-010|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T11:44:55Z", "feed_time": "2026-11-01T05:07:53Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["655|qpu-010|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T11:45:05Z", "feed_time": "2026-11-01T05:13:55Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["655|qpu-010|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T11:45:15Z", "feed_time": "2026-11-01T05:19:56Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["655|qpu-010|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T11:45:25Z", "feed_time": "2026-11-01T05:25:57Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["655|qpu-010|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T11:45:35Z", "feed_time": "2026-11-01T05:31:59Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["655|qpu-010|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T11:45:45Z", "feed_time": "2026-11-01T05:38:00Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["655|qpu-010|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T11:45:55Z", "feed_time": "2026-11-01T05:44:02Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["655|qpu-010|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T11:46:05Z", "feed_time": "2026-11-01T05:50:03Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["656|hybrid-011|RUNNING|None|gres/qpu:1|c1", "655|qpu-010|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T11:46:15Z", "feed_time": "2026-11-01T05:56:05Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["656|hybrid-011|RUNNING|None|gres/qpu:1|c1", "655|qpu-010|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T11:46:25Z", "feed_time": "2026-11-01T06:02:06Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["656|hybrid-011|RUNNING|None|gres/qpu:1|c1", "655|qpu-010|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T11:46:35Z", "feed_time": "2026-11-01T06:08:07Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["656|hybrid-011|RUNNING|None|gres/qpu:1|c1", "655|qpu-010|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T11:46:45Z", "feed_time": "2026-11-01T06:14:09Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["655|qpu-010|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T11:46:55Z", "feed_time": "2026-11-01T06:20:10Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T11:47:05Z", "feed_time": "2026-11-01T06:26:11Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T11:47:15Z", "feed_time": "2026-11-01T06:32:13Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T11:47:25Z", "feed_time": "2026-11-01T06:38:14Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T11:47:35Z", "feed_time": "2026-11-01T06:44:16Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T11:47:45Z", "feed_time": "2026-11-01T06:50:17Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["657|hybrid-012|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T11:47:55Z", "feed_time": "2026-11-01T06:56:19Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["657|hybrid-012|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T11:48:05Z", "feed_time": "2026-11-01T07:02:20Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["657|hybrid-012|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T11:48:15Z", "feed_time": "2026-11-01T07:08:21Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["657|hybrid-012|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T11:48:25Z", "feed_time": "2026-11-01T07:14:23Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["657|hybrid-012|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T11:48:35Z", "feed_time": "2026-11-01T07:20:24Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["657|hybrid-012|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T11:48:45Z", "feed_time": "2026-11-01T07:26:25Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["657|hybrid-012|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T11:48:55Z", "feed_time": "2026-11-01T07:32:27Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["658|hybrid-013|PENDING|None|gres/qpu:1|", "657|hybrid-012|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T11:49:06Z", "feed_time": "2026-11-01T07:38:28Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["658|hybrid-013|RUNNING|None|gres/qpu:1|c1", "657|hybrid-012|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T11:49:16Z", "feed_time": "2026-11-01T07:44:29Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["658|hybrid-013|RUNNING|None|gres/qpu:1|c1", "657|hybrid-012|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T11:49:26Z", "feed_time": "2026-11-01T07:50:31Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["658|hybrid-013|RUNNING|None|gres/qpu:1|c1", "657|hybrid-012|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T11:49:36Z", "feed_time": "2026-11-01T07:56:32Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["659|hybrid-014|PENDING|Resources|gres/qpu:1|", "658|hybrid-013|RUNNING|None|gres/qpu:1|c1", "657|hybrid-012|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T11:49:46Z", "feed_time": "2026-11-01T08:02:33Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["659|hybrid-014|RUNNING|None|gres/qpu:1|c1", "657|hybrid-012|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T11:49:56Z", "feed_time": "2026-11-01T08:08:35Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["661|classical-016|RUNNING|None|N/A|c2", "659|hybrid-014|RUNNING|None|gres/qpu:1|c1", "657|hybrid-012|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T11:50:06Z", "feed_time": "2026-11-01T08:14:36Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["661|classical-016|RUNNING|None|N/A|c2", "657|hybrid-012|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T11:50:16Z", "feed_time": "2026-11-01T08:20:38Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["657|hybrid-012|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T11:50:26Z", "feed_time": "2026-11-01T08:26:39Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["662|hybrid-017|RUNNING|None|gres/qpu:1|c1", "657|hybrid-012|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T11:50:36Z", "feed_time": "2026-11-01T08:32:41Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["662|hybrid-017|RUNNING|None|gres/qpu:1|c1", "657|hybrid-012|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T11:50:46Z", "feed_time": "2026-11-01T08:38:42Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["662|hybrid-017|RUNNING|None|gres/qpu:1|c1", "657|hybrid-012|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T11:50:56Z", "feed_time": "2026-11-01T08:44:43Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["662|hybrid-017|RUNNING|None|gres/qpu:1|c1"]}
+{"wall": "2026-11-23T11:51:06Z", "feed_time": "2026-11-01T08:50:45Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T11:51:16Z", "feed_time": "2026-11-01T08:56:46Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T11:51:26Z", "feed_time": "2026-11-01T09:02:48Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T11:51:36Z", "feed_time": "2026-11-01T09:08:49Z", "qpus": {"c1": 0, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T11:51:46Z", "feed_time": "2026-11-01T09:14:51Z", "qpus": {"c1": 0, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T11:51:56Z", "feed_time": "2026-11-01T09:20:52Z", "qpus": {"c1": 0, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T11:52:06Z", "feed_time": "2026-11-01T09:26:53Z", "qpus": {"c1": 0, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T11:52:16Z", "feed_time": "2026-11-01T09:32:55Z", "qpus": {"c1": 0, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T11:52:26Z", "feed_time": "2026-11-01T09:38:56Z", "qpus": {"c1": 0, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T11:52:36Z", "feed_time": "2026-11-01T09:44:58Z", "qpus": {"c1": 0, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T11:52:46Z", "feed_time": "2026-11-01T09:50:59Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T11:52:56Z", "feed_time": "2026-11-01T09:57:00Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T11:53:06Z", "feed_time": "2026-11-01T10:03:02Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T11:53:17Z", "feed_time": "2026-11-01T10:09:03Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T11:53:27Z", "feed_time": "2026-11-01T10:15:05Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T11:53:37Z", "feed_time": "2026-11-01T10:21:06Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T11:53:47Z", "feed_time": "2026-11-01T10:27:08Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T11:53:57Z", "feed_time": "2026-11-01T10:33:10Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T11:54:07Z", "feed_time": "2026-11-01T10:39:11Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T11:54:17Z", "feed_time": "2026-11-01T10:45:14Z", "qpus": {"c1": 1, "c2": 0}, "queue": ["663|qpu-018|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T11:54:27Z", "feed_time": "2026-11-01T10:51:16Z", "qpus": {"c1": 1, "c2": 0}, "queue": ["664|classical-019|RUNNING|None|N/A|c2", "663|qpu-018|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T11:54:37Z", "feed_time": "2026-11-01T10:57:17Z", "qpus": {"c1": 1, "c2": 0}, "queue": ["664|classical-019|RUNNING|None|N/A|c2", "663|qpu-018|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T11:54:47Z", "feed_time": "2026-11-01T11:03:18Z", "qpus": {"c1": 1, "c2": 0}, "queue": ["665|classical-020|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:54:57Z", "feed_time": "2026-11-01T11:09:20Z", "qpus": {"c1": 1, "c2": 0}, "queue": ["665|classical-020|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:55:07Z", "feed_time": "2026-11-01T11:15:21Z", "qpus": {"c1": 1, "c2": 0}, "queue": []}
+{"wall": "2026-11-23T11:55:17Z", "feed_time": "2026-11-01T11:21:23Z", "qpus": {"c1": 1, "c2": 0}, "queue": ["667|qpu-022|PENDING|None|gres/qpu:1|", "666|classical-021|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:55:27Z", "feed_time": "2026-11-01T11:27:24Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["667|qpu-022|RUNNING|None|gres/qpu:1|c1"]}
+{"wall": "2026-11-23T11:55:37Z", "feed_time": "2026-11-01T11:33:26Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["667|qpu-022|RUNNING|None|gres/qpu:1|c1"]}
+{"wall": "2026-11-23T11:55:47Z", "feed_time": "2026-11-01T11:39:27Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["667|qpu-022|RUNNING|None|gres/qpu:1|c1"]}
+{"wall": "2026-11-23T11:55:57Z", "feed_time": "2026-11-01T11:45:29Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["668|qpu-023|RUNNING|None|gres/qpu:1|c2", "667|qpu-022|RUNNING|None|gres/qpu:1|c1"]}
+{"wall": "2026-11-23T11:56:07Z", "feed_time": "2026-11-01T11:51:30Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["669|hybrid-024|PENDING|Resources|gres/qpu:1|", "668|qpu-023|RUNNING|None|gres/qpu:1|c2", "667|qpu-022|RUNNING|None|gres/qpu:1|c1"]}
+{"wall": "2026-11-23T11:56:17Z", "feed_time": "2026-11-01T11:57:31Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["669|hybrid-024|RUNNING|None|gres/qpu:1|c2", "667|qpu-022|RUNNING|None|gres/qpu:1|c1"]}
+{"wall": "2026-11-23T11:56:27Z", "feed_time": "2026-11-01T12:03:33Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T11:56:37Z", "feed_time": "2026-11-01T12:09:34Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T11:56:47Z", "feed_time": "2026-11-01T12:15:36Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T11:56:57Z", "feed_time": "2026-11-01T12:21:37Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["670|classical-025|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:57:07Z", "feed_time": "2026-11-01T12:27:38Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["670|classical-025|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:57:18Z", "feed_time": "2026-11-01T12:33:40Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["670|classical-025|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:57:28Z", "feed_time": "2026-11-01T12:39:41Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["670|classical-025|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:57:38Z", "feed_time": "2026-11-01T12:45:43Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["670|classical-025|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:57:48Z", "feed_time": "2026-11-01T12:51:44Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["670|classical-025|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:57:58Z", "feed_time": "2026-11-01T12:57:45Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["672|classical-027|PENDING|None|N/A|", "670|classical-025|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:58:08Z", "feed_time": "2026-11-01T13:03:47Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["672|classical-027|RUNNING|None|N/A|c2", "670|classical-025|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:58:18Z", "feed_time": "2026-11-01T13:09:48Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["672|classical-027|RUNNING|None|N/A|c2", "670|classical-025|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:58:28Z", "feed_time": "2026-11-01T13:15:50Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["673|classical-028|RUNNING|None|N/A|c2", "672|classical-027|RUNNING|None|N/A|c2", "670|classical-025|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:58:38Z", "feed_time": "2026-11-01T13:21:51Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["673|classical-028|RUNNING|None|N/A|c2", "672|classical-027|RUNNING|None|N/A|c2", "670|classical-025|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:58:48Z", "feed_time": "2026-11-01T13:27:53Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["673|classical-028|RUNNING|None|N/A|c2", "672|classical-027|RUNNING|None|N/A|c2", "670|classical-025|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:58:58Z", "feed_time": "2026-11-01T13:33:54Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["673|classical-028|RUNNING|None|N/A|c2", "672|classical-027|RUNNING|None|N/A|c2", "670|classical-025|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:59:08Z", "feed_time": "2026-11-01T13:39:56Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["673|classical-028|RUNNING|None|N/A|c2", "672|classical-027|RUNNING|None|N/A|c2", "670|classical-025|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:59:18Z", "feed_time": "2026-11-01T13:45:58Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["673|classical-028|RUNNING|None|N/A|c2", "672|classical-027|RUNNING|None|N/A|c2", "670|classical-025|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:59:28Z", "feed_time": "2026-11-01T13:52:00Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["674|qpu-029|RUNNING|None|gres/qpu:1|c2", "672|classical-027|RUNNING|None|N/A|c2", "670|classical-025|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:59:38Z", "feed_time": "2026-11-01T13:58:01Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["674|qpu-029|RUNNING|None|gres/qpu:1|c2", "670|classical-025|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:59:48Z", "feed_time": "2026-11-01T14:04:02Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["670|classical-025|RUNNING|None|N/A|c2"]}
+{"wall": "2026-11-23T11:59:58Z", "feed_time": "2026-11-01T14:10:04Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["675|qpu-030|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T12:00:08Z", "feed_time": "2026-11-01T14:16:05Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["675|qpu-030|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T12:00:18Z", "feed_time": "2026-11-01T14:22:07Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T12:00:28Z", "feed_time": "2026-11-01T14:28:08Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T12:00:38Z", "feed_time": "2026-11-01T14:34:09Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T12:00:48Z", "feed_time": "2026-11-01T14:40:11Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T12:00:58Z", "feed_time": "2026-11-01T14:46:13Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T12:01:08Z", "feed_time": "2026-11-01T14:52:14Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T12:01:19Z", "feed_time": "2026-11-01T14:58:16Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T12:01:29Z", "feed_time": "2026-11-01T15:04:17Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T12:01:39Z", "feed_time": "2026-11-01T15:10:19Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T12:01:49Z", "feed_time": "2026-11-01T15:16:20Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T12:01:59Z", "feed_time": "2026-11-01T15:22:22Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T12:02:09Z", "feed_time": "2026-11-01T15:28:24Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["677|qpu-032|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T12:02:19Z", "feed_time": "2026-11-01T15:34:25Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["677|qpu-032|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T12:02:29Z", "feed_time": "2026-11-01T15:40:27Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["677|qpu-032|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T12:02:39Z", "feed_time": "2026-11-01T15:46:29Z", "qpus": {"c1": 0, "c2": 1}, "queue": ["677|qpu-032|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T12:02:49Z", "feed_time": "2026-11-01T15:52:30Z", "qpus": {"c1": 0, "c2": 1}, "queue": ["677|qpu-032|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T12:02:59Z", "feed_time": "2026-11-01T15:58:32Z", "qpus": {"c1": 0, "c2": 1}, "queue": ["677|qpu-032|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T12:03:09Z", "feed_time": "2026-11-01T16:04:34Z", "qpus": {"c1": 0, "c2": 1}, "queue": ["677|qpu-032|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T12:03:19Z", "feed_time": "2026-11-01T16:10:35Z", "qpus": {"c1": 0, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T12:03:29Z", "feed_time": "2026-11-01T16:16:37Z", "qpus": {"c1": 0, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T12:03:39Z", "feed_time": "2026-11-01T16:22:38Z", "qpus": {"c1": 0, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T12:03:49Z", "feed_time": "2026-11-01T16:28:40Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T12:03:59Z", "feed_time": "2026-11-01T16:34:41Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T12:04:09Z", "feed_time": "2026-11-01T16:40:43Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T12:04:19Z", "feed_time": "2026-11-01T16:46:44Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T12:04:29Z", "feed_time": "2026-11-01T16:52:46Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T12:04:39Z", "feed_time": "2026-11-01T16:58:47Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T12:04:49Z", "feed_time": "2026-11-01T17:04:49Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T12:04:59Z", "feed_time": "2026-11-01T17:10:50Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T12:05:10Z", "feed_time": "2026-11-01T17:16:52Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["680|qpu-035|RUNNING|None|gres/qpu:1|c1", "679|hybrid-034|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T12:05:20Z", "feed_time": "2026-11-01T17:22:53Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["679|hybrid-034|RUNNING|None|gres/qpu:1|c2"]}
+{"wall": "2026-11-23T12:05:30Z", "feed_time": "2026-11-01T17:28:55Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}
+{"wall": "2026-11-23T12:05:40Z", "feed_time": "2026-11-01T17:34:56Z", "qpus": {"c1": 1, "c2": 0}, "queue": []}
+{"wall": "2026-11-23T12:05:50Z", "feed_time": "2026-11-01T17:40:58Z", "qpus": {"c1": 1, "c2": 0}, "queue": ["681|qpu-036|RUNNING|None|gres/qpu:1|c1"]}
+{"wall": "2026-11-23T12:06:00Z", "feed_time": "2026-11-01T17:47:00Z", "qpus": {"c1": 1, "c2": 0}, "queue": []}
+{"wall": "2026-11-23T12:06:10Z", "feed_time": "2026-11-01T17:53:02Z", "qpus": {"c1": 1, "c2": 0}, "queue": []}
+{"wall": "2026-11-23T12:06:20Z", "feed_time": "2026-11-01T17:59:03Z", "qpus": {"c1": 1, "c2": 0}, "queue": ["682|qpu-037|RUNNING|None|gres/qpu:1|c1"]}
+{"wall": "2026-11-23T12:06:30Z", "feed_time": "2026-11-01T18:05:05Z", "qpus": {"c1": 1, "c2": 0}, "queue": ["683|hybrid-038|PENDING|Resources|gres/qpu:1|", "682|qpu-037|RUNNING|None|gres/qpu:1|c1"]}
+{"wall": "2026-11-23T12:06:40Z", "feed_time": "2026-11-01T18:11:06Z", "qpus": {"c1": 1, "c2": 0}, "queue": ["683|hybrid-038|PENDING|Resources|gres/qpu:1|", "682|qpu-037|RUNNING|None|gres/qpu:1|c1"]}
+{"wall": "2026-11-23T12:06:50Z", "feed_time": "2026-11-01T18:17:08Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["683|hybrid-038|PENDING|Resources|gres/qpu:1|", "682|qpu-037|RUNNING|None|gres/qpu:1|c1"]}
+{"wall": "2026-11-23T12:07:00Z", "feed_time": "2026-11-01T18:23:09Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["683|hybrid-038|RUNNING|None|gres/qpu:1|c2", "682|qpu-037|RUNNING|None|gres/qpu:1|c1"]}
+{"wall": "2026-11-23T12:07:10Z", "feed_time": "2026-11-01T18:29:11Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["683|hybrid-038|RUNNING|None|gres/qpu:1|c2", "682|qpu-037|RUNNING|None|gres/qpu:1|c1"]}
+{"wall": "2026-11-23T12:07:20Z", "feed_time": "2026-11-01T18:35:12Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["683|hybrid-038|RUNNING|None|gres/qpu:1|c2", "682|qpu-037|RUNNING|None|gres/qpu:1|c1"]}
+{"wall": "2026-11-23T12:07:30Z", "feed_time": "2026-11-01T18:41:14Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["683|hybrid-038|RUNNING|None|gres/qpu:1|c2", "682|qpu-037|RUNNING|None|gres/qpu:1|c1"]}
+{"wall": "2026-11-23T12:07:40Z", "feed_time": "2026-11-01T18:47:15Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["683|hybrid-038|RUNNING|None|gres/qpu:1|c2", "682|qpu-037|RUNNING|None|gres/qpu:1|c1"]}
+{"wall": "2026-11-23T12:07:50Z", "feed_time": "2026-11-01T18:53:17Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["683|hybrid-038|RUNNING|None|gres/qpu:1|c2", "682|qpu-037|RUNNING|None|gres/qpu:1|c1"]}
+{"wall": "2026-11-23T12:08:00Z", "feed_time": "2026-11-01T18:59:18Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["683|hybrid-038|RUNNING|None|gres/qpu:1|c2", "682|qpu-037|RUNNING|None|gres/qpu:1|c1"]}
+{"wall": "2026-11-23T12:08:10Z", "feed_time": "2026-11-01T19:05:20Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["683|hybrid-038|RUNNING|None|gres/qpu:1|c2", "682|qpu-037|RUNNING|None|gres/qpu:1|c1"]}
+{"wall": "2026-11-23T12:08:20Z", "feed_time": "2026-11-01T19:11:21Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["683|hybrid-038|RUNNING|None|gres/qpu:1|c2", "682|qpu-037|RUNNING|None|gres/qpu:1|c1"]}
+{"wall": "2026-11-23T12:08:30Z", "feed_time": "2026-11-01T19:17:23Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["683|hybrid-038|RUNNING|None|gres/qpu:1|c2", "682|qpu-037|RUNNING|None|gres/qpu:1|c1"]}
+{"wall": "2026-11-23T12:08:40Z", "feed_time": "2026-11-01T19:23:24Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["683|hybrid-038|RUNNING|None|gres/qpu:1|c2", "682|qpu-037|RUNNING|None|gres/qpu:1|c1"]}
+{"wall": "2026-11-23T12:08:50Z", "feed_time": "2026-11-01T19:29:26Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["683|hybrid-038|RUNNING|None|gres/qpu:1|c2", "682|qpu-037|RUNNING|None|gres/qpu:1|c1"]}
+{"wall": "2026-11-23T12:09:01Z", "feed_time": "2026-11-01T19:35:27Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["683|hybrid-038|RUNNING|None|gres/qpu:1|c2", "682|qpu-037|RUNNING|None|gres/qpu:1|c1"]}
+{"wall": "2026-11-23T12:09:11Z", "feed_time": "2026-11-01T19:41:29Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["682|qpu-037|RUNNING|None|gres/qpu:1|c1"]}
+{"wall": "2026-11-23T12:09:21Z", "feed_time": "2026-11-01T19:47:30Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["682|qpu-037|RUNNING|None|gres/qpu:1|c1"]}
+{"wall": "2026-11-23T12:09:31Z", "feed_time": "2026-11-01T19:53:32Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["682|qpu-037|RUNNING|None|gres/qpu:1|c1"]}
+{"wall": "2026-11-23T12:09:41Z", "feed_time": "2026-11-01T19:59:34Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["682|qpu-037|RUNNING|None|gres/qpu:1|c1"]}
+{"wall": "2026-11-23T12:09:51Z", "feed_time": "2026-11-01T20:05:35Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["682|qpu-037|RUNNING|None|gres/qpu:1|c1"]}
+{"wall": "2026-11-23T12:10:01Z", "feed_time": "2026-11-01T20:11:36Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["682|qpu-037|RUNNING|None|gres/qpu:1|c1"]}
+{"wall": "2026-11-23T12:10:11Z", "feed_time": "2026-11-01T20:17:39Z", "qpus": {"c1": 1, "c2": 1}, "queue": ["682|qpu-037|RUNNING|None|gres/qpu:1|c1"]}
+{"wall": "2026-11-23T12:10:21Z", "feed_time": "2026-11-01T20:23:40Z", "qpus": {"c1": 1, "c2": 1}, "queue": []}

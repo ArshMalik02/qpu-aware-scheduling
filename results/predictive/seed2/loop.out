@@ -1,0 +1,37 @@
+[2026-11-23T08:51:35Z] reactive loop: feed=http://feed:8787 map={'qpu0': 'c1', 'qpu1': 'c2'} interval=10.0s (simulated)
+[2026-11-23T08:54:31Z] gate gate_release job 440 limit 72.0 feed-min fits=['c1'] qpu0:159.7 qpu1:52.0
+[2026-11-23T08:55:07Z] gate gate_release job 441 limit 36.0 feed-min fits=['c1'] qpu0:137.9 qpu1:30.2
+[2026-11-23T08:55:31Z] gate gate_release job 442 limit 72.0 feed-min fits=['c1'] qpu0:123.9 qpu1:16.2
+[2026-11-23T08:55:58Z] feed=2026-11-01T02:38:16Z c2/qpu1 QPU_OUT qpu:1->0 (paused: full recalibration in progress (simulated))
+[2026-11-23T08:58:50Z] feed=2026-11-01T04:21:17Z c2/qpu1 QPU_IN qpu:0->1 (online: calibrated (simulated))
+[2026-11-23T08:59:00Z] feed=2026-11-01T04:27:21Z c1/qpu0 QPU_OUT qpu:1->0 (paused: full recalibration in progress (simulated))
+[2026-11-23T08:59:24Z] gate gate_release job 444 limit 36.0 feed-min fits=['c2'] qpu0:451.1 qpu1:320.1
+[2026-11-23T08:59:26Z] gate gate_release job 445 limit 72.0 feed-min fits=['c2'] qpu0:449.8 qpu1:318.9
+[2026-11-23T09:00:17Z] gate gate_release job 447 limit 36.0 feed-min fits=['c2'] qpu0:418.9 qpu1:288.0
+[2026-11-23T09:00:34Z] gate gate_release job 448 limit 72.0 feed-min fits=['c2'] qpu0:409.2 qpu1:278.3
+[2026-11-23T09:01:51Z] feed=2026-11-01T06:10:26Z c1/qpu0 QPU_IN qpu:0->1 (online: calibrated (simulated))
+[2026-11-23T09:08:26Z] feed=2026-11-01T10:06:56Z c2/qpu1 QPU_OUT qpu:1->0 (paused: quick recalibration in progress (simulated))
+[2026-11-23T09:08:52Z] gate gate_hold    job 454 limit 108.0 feed-min fits=- qpu0:110.2 qpu1:371.2
+[2026-11-23T09:09:26Z] feed=2026-11-01T10:43:21Z c2/qpu1 QPU_IN qpu:0->1 (online: calibrated (simulated))
+[2026-11-23T09:09:26Z] gate gate_release job 454 limit 108.0 feed-min fits=['c2'] qpu0:89.6 qpu1:350.6
+[2026-11-23T09:10:36Z] gate gate_release job 455 limit 180.0 feed-min fits=['c2'] qpu0:47.8 qpu1:308.8
+[2026-11-23T09:11:18Z] gate gate_release job 457 limit 252.0 feed-min fits=['c2'] qpu0:22.9 qpu1:283.9
+[2026-11-23T09:11:58Z] feed=2026-11-01T12:14:21Z c1/qpu0 QPU_OUT qpu:1->0 (paused: quick recalibration in progress (simulated))
+[2026-11-23T09:12:01Z] gate gate_rehold  job 457 limit 252.0 feed-min fits=- qpu0:383.4 qpu1:257.8
+[2026-11-23T09:12:09Z] gate gate_release job 458 limit 72.0 feed-min fits=['c2'] qpu0:378.6 qpu1:252.9
+[2026-11-23T09:13:09Z] feed=2026-11-01T12:56:49Z c1/qpu0 QPU_IN qpu:0->1 (online: calibrated (simulated))
+[2026-11-23T09:13:09Z] gate gate_exclude job 458 limit 72.0 feed-min fits=['c1', 'c2'] qpu0:342.8 qpu1:217.1
+[2026-11-23T09:13:09Z] gate gate_release job 457 limit 252.0 feed-min fits=['c1'] qpu0:342.8 qpu1:217.1
+[2026-11-23T09:14:00Z] gate gate_release job 460 limit 144.0 feed-min fits=['c1', 'c2'] qpu0:311.8 qpu1:186.2
+[2026-11-23T09:14:44Z] gate gate_release job 462 limit 108.0 feed-min fits=['c1', 'c2'] qpu0:285.7 qpu1:160.1
+[2026-11-23T09:15:19Z] gate gate_release job 463 limit 36.0 feed-min fits=['c1', 'c2'] qpu0:264.5 qpu1:138.8
+[2026-11-23T09:17:26Z] gate gate_release job 466 limit 108.0 feed-min fits=['c1'] qpu0:188.7 qpu1:63.0
+[2026-11-23T09:19:08Z] gate gate_release job 471 limit 72.0 feed-min fits=['c1'] qpu0:127.4 qpu1:1.8
+[2026-11-23T09:19:13Z] feed=2026-11-01T16:35:13Z c2/qpu1 QPU_OUT qpu:1->0 (paused: quick recalibration in progress (simulated))
+[2026-11-23T09:20:23Z] feed=2026-11-01T17:17:40Z c2/qpu1 QPU_IN qpu:0->1 (online: calibrated (simulated))
+[2026-11-23T09:21:19Z] gate gate_release job 473 limit 72.0 feed-min fits=['c2'] qpu0:48.6 qpu1:328.6
+[2026-11-23T09:21:20Z] gate gate_release job 474 limit 108.0 feed-min fits=['c2'] qpu0:48.0 qpu1:328.0
+[2026-11-23T09:21:27Z] gate gate_release job 475 limit 72.0 feed-min fits=['c2'] qpu0:43.7 qpu1:323.7
+[2026-11-23T09:22:45Z] feed=2026-11-01T18:42:36Z c1/qpu0 QPU_OUT qpu:1->0 (paused: quick recalibration in progress (simulated))
+[2026-11-23T09:23:56Z] feed=2026-11-01T19:25:03Z c1/qpu0 QPU_IN qpu:0->1 (online: calibrated (simulated))
+[2026-11-23T09:24:38Z] reactive loop stopped; all QPUs restored

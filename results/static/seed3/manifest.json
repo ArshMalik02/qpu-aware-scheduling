@@ -1,0 +1,451 @@
+{
+  "assumed": true,
+  "duration_min": 30.0,
+  "jobs": [
+    {
+      "arrival_s": 10.87,
+      "cpus": 2,
+      "hold_s": 41.6,
+      "idx": 0,
+      "limit_s": 93,
+      "qpu": true,
+      "slurm_limit_s": 120,
+      "type": "hybrid"
+    },
+    {
+      "arrival_s": 47.92,
+      "cpus": 1,
+      "hold_s": 4.1,
+      "idx": 1,
+      "limit_s": 37,
+      "qpu": false,
+      "slurm_limit_s": 60,
+      "type": "classical"
+    },
+    {
+      "arrival_s": 48.45,
+      "cpus": 1,
+      "hold_s": 18.0,
+      "idx": 2,
+      "limit_s": 57,
+      "qpu": false,
+      "slurm_limit_s": 60,
+      "type": "classical"
+    },
+    {
+      "arrival_s": 59.13,
+      "cpus": 1,
+      "hold_s": 38.1,
+      "idx": 3,
+      "limit_s": 88,
+      "qpu": false,
+      "slurm_limit_s": 120,
+      "type": "classical"
+    },
+    {
+      "arrival_s": 131.55,
+      "cpus": 2,
+      "hold_s": 91.7,
+      "idx": 4,
+      "limit_s": 168,
+      "qpu": true,
+      "slurm_limit_s": 180,
+      "type": "hybrid"
+    },
+    {
+      "arrival_s": 138.08,
+      "cpus": 1,
+      "hold_s": 121.5,
+      "idx": 5,
+      "limit_s": 213,
+      "qpu": false,
+      "slurm_limit_s": 240,
+      "type": "classical"
+    },
+    {
+      "arrival_s": 167.71,
+      "cpus": 1,
+      "hold_s": 66.8,
+      "idx": 6,
+      "limit_s": 131,
+      "qpu": false,
+      "slurm_limit_s": 180,
+      "type": "classical"
+    },
+    {
+      "arrival_s": 170.36,
+      "cpus": 1,
+      "hold_s": 53.7,
+      "idx": 7,
+      "limit_s": 111,
+      "qpu": false,
+      "slurm_limit_s": 120,
+      "type": "classical"
+    },
+    {
+      "arrival_s": 184.7,
+      "cpus": 1,
+      "hold_s": 90.3,
+      "idx": 8,
+      "limit_s": 166,
+      "qpu": true,
+      "slurm_limit_s": 180,
+      "type": "qpu"
+    },
+    {
+      "arrival_s": 210.3,
+      "cpus": 1,
+      "hold_s": 126.6,
+      "idx": 9,
+      "limit_s": 220,
+      "qpu": false,
+      "slurm_limit_s": 240,
+      "type": "classical"
+    },
+    {
+      "arrival_s": 260.39,
+      "cpus": 1,
+      "hold_s": 30.1,
+      "idx": 10,
+      "limit_s": 76,
+      "qpu": false,
+      "slurm_limit_s": 120,
+      "type": "classical"
+    },
+    {
+      "arrival_s": 324.95,
+      "cpus": 2,
+      "hold_s": 240.0,
+      "idx": 11,
+      "limit_s": 390,
+      "qpu": true,
+      "slurm_limit_s": 420,
+      "type": "hybrid"
+    },
+    {
+      "arrival_s": 409.38,
+      "cpus": 1,
+      "hold_s": 6.6,
+      "idx": 12,
+      "limit_s": 40,
+      "qpu": true,
+      "slurm_limit_s": 60,
+      "type": "qpu"
+    },
+    {
+      "arrival_s": 419.17,
+      "cpus": 1,
+      "hold_s": 34.4,
+      "idx": 13,
+      "limit_s": 82,
+      "qpu": false,
+      "slurm_limit_s": 120,
+      "type": "classical"
+    },
+    {
+      "arrival_s": 458.58,
+      "cpus": 1,
+      "hold_s": 31.8,
+      "idx": 14,
+      "limit_s": 78,
+      "qpu": true,
+      "slurm_limit_s": 120,
+      "type": "qpu"
+    },
+    {
+      "arrival_s": 478.08,
+      "cpus": 1,
+      "hold_s": 39.6,
+      "idx": 15,
+      "limit_s": 90,
+      "qpu": true,
+      "slurm_limit_s": 120,
+      "type": "qpu"
+    },
+    {
+      "arrival_s": 513.18,
+      "cpus": 1,
+      "hold_s": 68.7,
+      "idx": 16,
+      "limit_s": 134,
+      "qpu": false,
+      "slurm_limit_s": 180,
+      "type": "classical"
+    },
+    {
+      "arrival_s": 618.96,
+      "cpus": 1,
+      "hold_s": 240.0,
+      "idx": 17,
+      "limit_s": 390,
+      "qpu": false,
+      "slurm_limit_s": 420,
+      "type": "classical"
+    },
+    {
+      "arrival_s": 663.46,
+      "cpus": 1,
+      "hold_s": 88.7,
+      "idx": 18,
+      "limit_s": 164,
+      "qpu": true,
+      "slurm_limit_s": 180,
+      "type": "qpu"
+    },
+    {
+      "arrival_s": 797.14,
+      "cpus": 1,
+      "hold_s": 50.5,
+      "idx": 19,
+      "limit_s": 106,
+      "qpu": false,
+      "slurm_limit_s": 120,
+      "type": "classical"
+    },
+    {
+      "arrival_s": 847.18,
+      "cpus": 1,
+      "hold_s": 80.2,
+      "idx": 20,
+      "limit_s": 151,
+      "qpu": true,
+      "slurm_limit_s": 180,
+      "type": "qpu"
+    },
+    {
+      "arrival_s": 881.27,
+      "cpus": 1,
+      "hold_s": 3.0,
+      "idx": 21,
+      "limit_s": 35,
+      "qpu": true,
+      "slurm_limit_s": 60,
+      "type": "qpu"
+    },
+    {
+      "arrival_s": 958.22,
+      "cpus": 1,
+      "hold_s": 5.6,
+      "idx": 22,
+      "limit_s": 39,
+      "qpu": false,
+      "slurm_limit_s": 60,
+      "type": "classical"
+    },
+    {
+      "arrival_s": 1022.72,
+      "cpus": 2,
+      "hold_s": 14.7,
+      "idx": 23,
+      "limit_s": 53,
+      "qpu": true,
+      "slurm_limit_s": 60,
+      "type": "hybrid"
+    },
+    {
+      "arrival_s": 1036.64,
+      "cpus": 1,
+      "hold_s": 123.7,
+      "idx": 24,
+      "limit_s": 216,
+      "qpu": false,
+      "slurm_limit_s": 240,
+      "type": "classical"
+    },
+    {
+      "arrival_s": 1038.44,
+      "cpus": 1,
+      "hold_s": 2.8,
+      "idx": 25,
+      "limit_s": 35,
+      "qpu": false,
+      "slurm_limit_s": 60,
+      "type": "classical"
+    },
+    {
+      "arrival_s": 1089.14,
+      "cpus": 1,
+      "hold_s": 95.8,
+      "idx": 26,
+      "limit_s": 174,
+      "qpu": true,
+      "slurm_limit_s": 180,
+      "type": "qpu"
+    },
+    {
+      "arrival_s": 1246.91,
+      "cpus": 2,
+      "hold_s": 240.0,
+      "idx": 27,
+      "limit_s": 390,
+      "qpu": true,
+      "slurm_limit_s": 420,
+      "type": "hybrid"
+    },
+    {
+      "arrival_s": 1261.74,
+      "cpus": 1,
+      "hold_s": 41.2,
+      "idx": 28,
+      "limit_s": 92,
+      "qpu": true,
+      "slurm_limit_s": 120,
+      "type": "qpu"
+    },
+    {
+      "arrival_s": 1263.01,
+      "cpus": 1,
+      "hold_s": 23.6,
+      "idx": 29,
+      "limit_s": 66,
+      "qpu": true,
+      "slurm_limit_s": 120,
+      "type": "qpu"
+    },
+    {
+      "arrival_s": 1300.73,
+      "cpus": 1,
+      "hold_s": 2.0,
+      "idx": 30,
+      "limit_s": 33,
+      "qpu": true,
+      "slurm_limit_s": 60,
+      "type": "qpu"
+    },
+    {
+      "arrival_s": 1381.66,
+      "cpus": 1,
+      "hold_s": 143.4,
+      "idx": 31,
+      "limit_s": 246,
+      "qpu": true,
+      "slurm_limit_s": 300,
+      "type": "qpu"
+    },
+    {
+      "arrival_s": 1472.45,
+      "cpus": 1,
+      "hold_s": 27.8,
+      "idx": 32,
+      "limit_s": 72,
+      "qpu": true,
+      "slurm_limit_s": 120,
+      "type": "qpu"
+    },
+    {
+      "arrival_s": 1501.81,
+      "cpus": 1,
+      "hold_s": 54.3,
+      "idx": 33,
+      "limit_s": 112,
+      "qpu": false,
+      "slurm_limit_s": 120,
+      "type": "classical"
+    },
+    {
+      "arrival_s": 1534.58,
+      "cpus": 1,
+      "hold_s": 169.4,
+      "idx": 34,
+      "limit_s": 285,
+      "qpu": false,
+      "slurm_limit_s": 300,
+      "type": "classical"
+    },
+    {
+      "arrival_s": 1562.87,
+      "cpus": 2,
+      "hold_s": 114.7,
+      "idx": 35,
+      "limit_s": 203,
+      "qpu": true,
+      "slurm_limit_s": 240,
+      "type": "hybrid"
+    },
+    {
+      "arrival_s": 1573.73,
+      "cpus": 1,
+      "hold_s": 171.3,
+      "idx": 36,
+      "limit_s": 287,
+      "qpu": true,
+      "slurm_limit_s": 300,
+      "type": "qpu"
+    },
+    {
+      "arrival_s": 1603.18,
+      "cpus": 2,
+      "hold_s": 1.0,
+      "idx": 37,
+      "limit_s": 32,
+      "qpu": true,
+      "slurm_limit_s": 60,
+      "type": "hybrid"
+    },
+    {
+      "arrival_s": 1624.64,
+      "cpus": 2,
+      "hold_s": 1.8,
+      "idx": 38,
+      "limit_s": 33,
+      "qpu": true,
+      "slurm_limit_s": 60,
+      "type": "hybrid"
+    },
+    {
+      "arrival_s": 1662.9,
+      "cpus": 1,
+      "hold_s": 3.7,
+      "idx": 39,
+      "limit_s": 36,
+      "qpu": false,
+      "slurm_limit_s": 60,
+      "type": "classical"
+    },
+    {
+      "arrival_s": 1702.39,
+      "cpus": 2,
+      "hold_s": 102.3,
+      "idx": 40,
+      "limit_s": 184,
+      "qpu": true,
+      "slurm_limit_s": 240,
+      "type": "hybrid"
+    },
+    {
+      "arrival_s": 1719.78,
+      "cpus": 1,
+      "hold_s": 80.4,
+      "idx": 41,
+      "limit_s": 151,
+      "qpu": false,
+      "slurm_limit_s": 180,
+      "type": "classical"
+    },
+    {
+      "arrival_s": 1720.68,
+      "cpus": 1,
+      "hold_s": 50.7,
+      "idx": 42,
+      "limit_s": 107,
+      "qpu": true,
+      "slurm_limit_s": 120,
+      "type": "qpu"
+    }
+  ],
+  "limit_rule": "limit_s = ceil(hold_s * 1.5) + 30; Slurm rounds up to whole minutes",
+  "max_hold_s": 240.0,
+  "mean_hold_s": {
+    "classical": 60.0,
+    "hybrid": 90.0,
+    "qpu": 45.0
+  },
+  "mix": {
+    "classical": 0.4,
+    "hybrid": 0.2,
+    "qpu": 0.4
+  },
+  "rate_per_min": 1.5,
+  "seed": 3,
+  "simulated": true
+}

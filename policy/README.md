@@ -31,6 +31,44 @@ This runs [`run_baseline_reactive.sh`](run_baseline_reactive.sh), which does the
 | `RATE_PER_MIN` | 1.5 | mean arrivals per minute |
 | `DRAIN_MIN` | 15 | max wait for the queue to empty; anything left is cancelled |
 
+## Three policies and the sweep
+
+| Policy | Command | What it does |
+|---|---|---|
+| static | `reactive.py --observe-only` | Never touches nodes; only logs the recal windows, so its overlap is measured the same way |
+| reactive | `reactive.py` | Takes a node's QPU out while the feed isn't online (HRES-like) |
+| predictive | `predictive.py` | Reactive, plus: a QPU job may start on a QPU only if `now + its time limit + one poll ≤ next_recal.start` (feed time) |
+
+```bash
+make baseline POLICY=predictive SEED=1                       # one run (~35 min)
+make sweep SEEDS="1 2 3 4 5" POLICIES="static reactive predictive"   # prints its estimated wall time first
+make aggregate                                               # re-run aggregate + chart on existing results
+```
+
+**Unattended sweep (e.g. overnight):**
+```bash
+setsid nohup make sweep SEEDS="1 2 3 4 5" > results/sweep.log 2>&1 < /dev/null &
+tail -f results/sweep.log      # ends with PASS or FAIL
+```
+- **Resume:** run the same command again. Any policy/seed whose `summary.json` has every check passing, and whose `run_config.json` matches the sweep's feed seed, `RUN_MIN` and `FEED_SPEED`, is skipped (`FORCE=1` re-runs it), and a failed run is retried once.
+- **Clean starts:** a leftover queue before a run is cancelled and waited out. On any early exit, including a signal, `run_baseline.sh` stops `gen.py`, cancels the run's jobs, waits for an empty queue and stops the loop, which restores both QPUs. So the next run starts clean.
+
+For seed N, every policy uses workload seed N and feed seed 100+N. Results go to `results/<policy>/seed<N>/`. `aggregate.py` writes
+`results/sweep_summary.csv` (one row per policy × seed) and `results/sweep_table.md` (median and min–max across seeds), and `plot_sweep.py` writes
+`results/sweep.png`. The sweep uses `RUN_MIN=30`.
+
+**Predictive mechanism (26.05.2):**
+- QPU jobs are submitted held (`gen.py --hold-qpu`).
+- About every second, the gate releases a held job once at least one QPU fits it. It sets `ExcNodeList` to the QPUs that don't fit, and holds a released job again (`scontrol uhold`) if none fit any more. The per-job decision is the pure function `decide()`.
+- "Held" means reason `JobHeldUser` or `JobHeldAdmin`. The gate runs as root, and a root `scontrol hold` is an admin hold.
+- A QPU fits only if it's online, `healthy` isn't false, and `next_recal.start` is far enough ahead; a recal start already in the past never fits.
+- [`repro_rehold.sh`](repro_rehold.sh) checks release → re-hold → release against a stub feed (run it on an idle cluster).
+- The rule uses the time limit Slurm enforces, which is rounded up to whole minutes, converted to feed time with `feed_speed`.
+- Unlike an HRES prerun gate, the decision is made outside the scheduler, so it can lag by ~1 s.
+- A held submit is accepted even while every QPU is out. So predictive never has submit rejections, and that column isn't comparable across policies.
+
+**Time limits:** `limit_s = ceil(hold_s × 1.5) + 30`, as `--time=MM:SS`. Hold times are assumed.
+
 ## How the loop takes a QPU out
 
 Every 10 s (the `maintenance_cycle` in the HRES plugin example), for each `qpu → node`
@@ -69,12 +107,13 @@ given in wall seconds. At the default 36× speed a 45 s hold is 27 feed minutes,
 
 ## Recal overlap (the cross-policy metric)
 
-`recal_overlap()` in `summarize.py` counts the QPU and hybrid jobs that were **RUNNING on a node at the
-moment its QPU went out** (a `QPU_OUT` in `transitions.log`). For each one it measures the overlap,
-`min(job end, next QPU_IN on that node) − QPU_OUT time`, in wall seconds and feed minutes. That's how
-long the job kept using a QPU the feed said was recalibrating. A reactive policy can't avoid this,
-since it only reacts once the recal has started. It's the number a predictive policy should bring
-down.
+`recal_overlap()` in `summarize.py` treats each `QPU_OUT` → next `QPU_IN` on a node (from
+`transitions.log`; no `QPU_IN` → run end) as a recal window. A QPU or hybrid job's overlap is the
+intersection of its `[start, end)` with every window on its node, summed, in wall seconds and feed
+minutes: how long it used a QPU the feed said was recalibrating.
+- This counts jobs already running when the recal starts, and jobs that start during it.
+- Reactive removes the second kind but can't avoid the first, since it only reacts once the recal has started. Windows start at the logged `QPU_OUT` (a poll time), so a job that starts in the poll lag before it counts as the first kind.
+- The first kind is what a predictive policy should bring down.
 
 The metric needs only `jobs.csv` and `transitions.log`, so it's computed the same way for every
 policy. For a policy that doesn't take QPUs out (e.g. static), run the loop with

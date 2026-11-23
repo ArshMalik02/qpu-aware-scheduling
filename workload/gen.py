@@ -8,6 +8,15 @@ Poisson arrivals of three job types:
 Each job then holds its resources for a seeded "hold" time (sleep), standing in for
 device/compute time. Hold times and the mix are ASSUMED parameters, not measured.
 
+Time limits: each job gets limit_s = ceil(hold_s * 1.5) + 30, passed as --time=MM:SS.
+Slurm rounds a time limit up to whole minutes (--time=01:45 becomes 00:02:00 on
+26.05.2), so the manifest also records slurm_limit_s, the limit Slurm enforces.
+hold_s < limit_s <= slurm_limit_s always holds (tested).
+
+--hold-qpu submits QPU and hybrid jobs held (sbatch --hold), for the predictive policy,
+which releases each job only once it fits before the next recal. A held submit is
+accepted even while every QPU is out, where a plain one is rejected (see submit()).
+
   gen.py --seed N --manifest m.json            write the manifest only
   gen.py --seed N --manifest m.json --submit   write it, then sbatch each job at its arrival time
 
@@ -19,6 +28,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import random
 import subprocess
 import sys
@@ -31,6 +41,16 @@ CPUS = {"qpu": 1, "hybrid": 2, "classical": 1}
 MAX_HOLD_S = 240.0
 
 
+def limit_for(hold_s: float) -> tuple[int, int]:
+    """(limit_s, slurm_limit_s): the requested limit and Slurm's whole-minute round-up."""
+    limit_s = math.ceil(hold_s * 1.5) + 30
+    return limit_s, math.ceil(limit_s / 60) * 60
+
+
+def time_arg(limit_s: int) -> str:
+    return f"--time={limit_s // 60:02d}:{limit_s % 60:02d}"
+
+
 def make_manifest(seed: int, duration_min: float, rate_per_min: float) -> dict:
     r = random.Random(seed)
     jobs, t, horizon = [], 0.0, duration_min * 60
@@ -40,21 +60,26 @@ def make_manifest(seed: int, duration_min: float, rate_per_min: float) -> dict:
             break
         kind = r.choices(list(MIX), weights=list(MIX.values()))[0]
         hold = min(MAX_HOLD_S, r.expovariate(1.0 / MEAN_HOLD_S[kind]))
+        hold = round(hold, 1)
+        limit_s, slurm_limit_s = limit_for(hold)
         jobs.append({"idx": len(jobs), "type": kind, "arrival_s": round(t, 2),
-                     "hold_s": round(hold, 1), "cpus": CPUS[kind],
-                     "qpu": kind != "classical"})
+                     "hold_s": hold, "limit_s": limit_s, "slurm_limit_s": slurm_limit_s,
+                     "cpus": CPUS[kind], "qpu": kind != "classical"})
     return {"seed": seed, "duration_min": duration_min, "rate_per_min": rate_per_min,
             "mix": MIX, "mean_hold_s": MEAN_HOLD_S, "max_hold_s": MAX_HOLD_S,
+            "limit_rule": "limit_s = ceil(hold_s * 1.5) + 30; Slurm rounds up to whole minutes",
             "assumed": True, "simulated": True, "jobs": jobs}
 
 
-def sbatch_args(job: dict, out_dir: str) -> list[str]:
+def sbatch_args(job: dict, out_dir: str, hold_qpu: bool = False) -> list[str]:
     name = f"{job['type']}-{job['idx']:03d}"
     args = ["sbatch", "--parsable", "-J", name, f"-c{job['cpus']}", "--mem=500M",
-            "--time=00:10:00", "-o", f"{out_dir}/{name}_%j.out",
+            time_arg(job["limit_s"]), "-o", f"{out_dir}/{name}_%j.out",
             f"--export=ALL,JOBS_OUT_DIR={out_dir}"]
     if job["qpu"]:
         args.append("--gres=qpu:1")
+        if hold_qpu:
+            args.append("--hold")
     body = {"qpu": "python3 /data/jobs/aer_bell.py >/dev/null",
             "hybrid": "python3 /data/jobs/vqe_toy.py >/dev/null",
             "classical": "true"}[job["type"]]
@@ -66,7 +91,7 @@ NO_QPU_CONFIGURED = "Requested node configuration is not available"
 RETRY_S = 5.0
 
 
-def submit(manifest: dict, out_dir: str, log_path: Path) -> None:
+def submit(manifest: dict, out_dir: str, log_path: Path, hold_qpu: bool = False) -> None:
     """sbatch each job at its arrival time.
 
     On 26.05.2, while every node's QPU is out (Gres=qpu:0 everywhere), sbatch rejects a
@@ -83,7 +108,7 @@ def submit(manifest: dict, out_dir: str, log_path: Path) -> None:
             now = time.monotonic() - t0
             due = [j for j in pending if j["arrival_s"] <= now]
             for job in due:
-                res = subprocess.run(sbatch_args(job, out_dir), capture_output=True, text=True)
+                res = subprocess.run(sbatch_args(job, out_dir, hold_qpu), capture_output=True, text=True)
                 attempts[job["idx"]] = attempts.get(job["idx"], 0) + 1
                 if res.returncode == 0:
                     jid = res.stdout.strip()
@@ -118,6 +143,8 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--submit", action="store_true", help="sbatch each job at its arrival time")
     p.add_argument("--out-dir", default="/data/results/reactive/jobs")
     p.add_argument("--submit-log", default="/data/results/reactive/submitted.log")
+    p.add_argument("--hold-qpu", action="store_true",
+                   help="submit QPU/hybrid jobs held (predictive policy releases them)")
     a = p.parse_args(argv)
     m = make_manifest(a.seed, a.duration_min, a.rate_per_min)
     Path(a.manifest).parent.mkdir(parents=True, exist_ok=True)
@@ -125,7 +152,7 @@ def main(argv: list[str] | None = None) -> None:
     counts = {k: sum(j["type"] == k for j in m["jobs"]) for k in MIX}
     print(f"manifest: {len(m['jobs'])} jobs {counts} (seed {a.seed}, simulated)", flush=True)
     if a.submit:
-        submit(m, a.out_dir, Path(a.submit_log))
+        submit(m, a.out_dir, Path(a.submit_log), a.hold_qpu)
 
 
 if __name__ == "__main__":
