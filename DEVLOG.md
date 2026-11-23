@@ -1,3 +1,65 @@
+## 2026-11-23: 5-seed sweep (simulated)
+
+`make sweep SEEDS="1 2 3 4 5"` on the x86_64 Docker cluster (Slurm 26.05.2). QPUs are GRES counters, and the feed is simulated at 36× (1 wall s = 0.6 feed min). Drift, the recal schedule and job times are assumed.
+- **Settings:** for seed N, all three policies use workload seed N and feed seed 100+N, with a byte-identical job manifest. `RUN_MIN=30`.
+- **Runs:** seed 1 is the smoke run (skipped as already passed). The 12 new runs all passed their checks on the first attempt, and all jobs completed in all 15 runs.
+- **Tables:** `results/sweep_table.md` and `results/sweep_summary.csv`. Values are median across seeds [min–max], in feed minutes.
+
+| Metric | static | reactive | predictive |
+|---|---|---|---|
+| Recal-overlap jobs | 6 [3–8] | 2 [1–3] | 0 [0–0] |
+| Recal overlap (feed min) | 116.4 [75–185.4] | 67.2 [21–96.6] | 0 [0–0] |
+| QPU-only wait median | 0 [0–0.3] | 0 [0–10.2] | 2.4 [1.5–30.6] |
+| QPU-only wait p95 | 24.6 [1.8–32.4] | 31.2 [3–81] | 121.8 [33–175.8] |
+| Hybrid wait p95 | 9 [1.2–46.2] | 17.4 [1.2–46.2] | 130.8 [23.4–161.4] |
+| Classical wait p95 | 1.8 [0.6–12] | 1.8 [0.6–14.4] | 10.8 [1.8–13.2] |
+| Completion p95 | 117 [79.2–144.6] | 117 [82.2–144.6] | 172.8 [118.2–223.8] |
+| Gate: jobs kept held at least once | – | – | 6 [2–7] |
+| Gate: re-holds | – | – | 0 [0–1] |
+
+**Recal overlap per seed** (feed min, static → reactive → predictive):
+
+| Seed | static | reactive | predictive |
+|---|---|---|---|
+| 1 | 116.4 | 69 | 0 |
+| 2 | 91.8 | 67.2 | 0 |
+| 3 | 185.4 | 65.4 | 0 |
+| 4 | 75 | 21 | 0 |
+| 5 | 127.8 | 96.6 | 0 |
+
+- Reactive's remaining overlap is jobs already running when a recal began.
+- In no predictive run did a QPU/hybrid job's start + Slurm time limit cross the next logged `QPU_OUT` on its node. The smallest margin was 17 wall s (seed 5). That's checked against the logged poll times, the same windows the overlap metric uses.
+
+**p95 is one job.** p95 is the value at index int(0.95·n), so for n ≤ 20 it is the maximum. Per seed, QPU-only n = 12–19 and hybrid n = 5–13.
+
+**Cost varies a lot by seed.** Predictive vs reactive p95, per seed:
+
+| Seed | QPU-only | hybrid |
+|---|---|---|
+| 1 | 1.5× | 26× |
+| 2 | 2.5× | 1.6× |
+| 3 | 3.2× | 3.5× |
+| 4 | 11× | 1.3× |
+| 5 | 5.9× | 109× |
+
+- So QPU-only is 1.5–11× and hybrid 1.3–109×. The 109× is seed 5, where hybrid n = 5 and reactive's hybrid p95 is 1.2 feed min.
+- The ratio of the medians across seeds is about 3.9× (QPU-only) and 7.5× (hybrid). The per-seed spread is the better description.
+
+**Re-holds in real runs.** Two gate re-holds, both released again and COMPLETED. Gate events for each: `gate_release gate_rehold gate_release`.
+- Seed 2: `hybrid-019`, on c1.
+- Seed 3: `qpu-036`, on c1.
+
+**The seed-1 classical-wait explanation doesn't generalize.** In seed 1, predictive's higher classical p95 came with more backfill starts (7 vs 1 static, 0 reactive). Across seeds it isn't specific to predictive. Static seed 3 also had classical p95 = 12 feed min, with 6 classical jobs started by backfill, against 2 reactive and 4 predictive. Classical backfill starts per run, seeds 2–5:
+- static: 2 / 6 / 1 / 0
+- reactive: 2 / 2 / 0 / 1
+- predictive: 3 / 4 / 0 / 2
+
+These counts are from the new `Flags` column in `sacct.txt`; seed 1's file predates it. So classical waits of this size happen under any policy when QPU/hybrid jobs pile up ahead of classical ones. That predictive raises them is not established by these five seeds.
+
+**Not comparable across policies:**
+- Submit rejections, because held submits are accepted while every QPU is out.
+- Overlap windows start at the loop's poll times (every 10 s), the same for every policy.
+
 ## 2026-11-22: Predictive (recal-timing) policy + 3-policy sweep runner
 
 Everything here is **simulated**: the QPUs are Slurm GRES counters, the jobs run on Aer (CPU), and recal windows come from the simulated feed. The claim being tested is narrow: what does seeing a recal *before* it starts buy you? Slurm 26.11 HRES and the reactive loop from 2026-11-18 only act once a recal has started.

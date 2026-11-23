@@ -76,7 +76,6 @@ TABLE = [  # (label, column, unit)
     ("Classical wait p95 (feed min)", "classical_wait_p95_feed_min", ""),
     ("Completion median (feed min)", "completion_median_feed_min", ""),
     ("Completion p95 (feed min)", "completion_p95_feed_min", ""),
-    ("Jobs completed", "jobs_completed", ""),
     ("Submit rejections", "submit_rejections", ""),
     ("Gate: jobs kept held at least once", "gate_jobs_kept_held", ""),
     ("Gate: re-holds", "gate_reholds", ""),
@@ -100,7 +99,10 @@ def table_md(rows: list[dict]) -> str:
            "predictive; the gate rows count jobs it kept held (no QPU fitted) at least once.", "",
            "| Metric | " + " | ".join(f"{p} (seeds {','.join(map(str, seeds[p]))})" for p in policies) + " |",
            "|---|" + "---|" * len(policies)]
-    for label, col, _ in TABLE:
+    # Completion: one line when every run completed every job, else the per-policy row.
+    all_done = all(isinstance(r["jobs_completed"], int) and r["jobs_completed"] == r["jobs_total"] for r in rows)
+    table = TABLE if all_done else TABLE[:8] + [("Jobs completed", "jobs_completed", "")] + TABLE[8:]
+    for label, col, _ in table:
         cells = []
         for p in policies:
             xs = [r[col] for r in rows if r["policy"] == p and isinstance(r[col], (int, float))]
@@ -111,6 +113,8 @@ def table_md(rows: list[dict]) -> str:
             else:
                 cells.append(f"{fmt(round(statistics.median(xs), 2))} [{fmt(min(xs))}–{fmt(max(xs))}]")
         out.append(f"| {label} | " + " | ".join(cells) + " |")
+    if all_done:
+        out += ["", f"All jobs completed in all {len(rows)} runs."]
     return "\n".join(out) + "\n"
 
 
