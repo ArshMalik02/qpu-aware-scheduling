@@ -1,0 +1,332 @@
+{
+  "simulated": true,
+  "run_config": {
+    "policy": "predictive",
+    "seed": 2,
+    "feed_seed": 102,
+    "feed_speed": 36,
+    "forecast_err_min": 120,
+    "run_min": 30,
+    "rate_per_min": 1.5,
+    "poll_interval_s": 10,
+    "map": "qpu0=c1,qpu1=c2",
+    "start_utc": "2026-11-23T21:27:25",
+    "simulated": true
+  },
+  "units": "wall_s = wall-clock seconds; feed_min = wall_s * feed_speed / 60 (simulated feed minutes)",
+  "jobs_by_type": {
+    "qpu": 12,
+    "hybrid": 7,
+    "classical": 19
+  },
+  "states": {
+    "COMPLETED": 38
+  },
+  "qpu_wait": {
+    "qpu": {
+      "n": 12,
+      "wall_s": {
+        "mean": 76.4,
+        "median": 60.0,
+        "p95": 260.0,
+        "max": 260.0
+      },
+      "feed_min": {
+        "mean": 45.9,
+        "median": 36.0,
+        "p95": 156.0,
+        "max": 156.0
+      }
+    },
+    "hybrid": {
+      "n": 7,
+      "wall_s": {
+        "mean": 87.0,
+        "median": 71.0,
+        "p95": 265.0,
+        "max": 265.0
+      },
+      "feed_min": {
+        "mean": 52.2,
+        "median": 42.6,
+        "p95": 159.0,
+        "max": 159.0
+      }
+    }
+  },
+  "classical_queue_wait": {
+    "n": 19,
+    "wall_s": {
+      "mean": 2.5,
+      "median": 1.0,
+      "p95": 20.0,
+      "max": 20.0
+    },
+    "feed_min": {
+      "mean": 1.5,
+      "median": 0.6,
+      "p95": 12.0,
+      "max": 12.0
+    }
+  },
+  "completion": {
+    "qpu": {
+      "n": 12,
+      "wall_s": {
+        "mean": 121.3,
+        "median": 90.0,
+        "p95": 319.0,
+        "max": 319.0
+      },
+      "feed_min": {
+        "mean": 72.8,
+        "median": 54.0,
+        "p95": 191.4,
+        "max": 191.4
+      }
+    },
+    "hybrid": {
+      "n": 7,
+      "wall_s": {
+        "mean": 176.4,
+        "median": 164.0,
+        "p95": 340.0,
+        "max": 340.0
+      },
+      "feed_min": {
+        "mean": 105.9,
+        "median": 98.4,
+        "p95": 204.0,
+        "max": 204.0
+      }
+    },
+    "classical": {
+      "n": 19,
+      "wall_s": {
+        "mean": 59.7,
+        "median": 68.0,
+        "p95": 197.0,
+        "max": 197.0
+      },
+      "feed_min": {
+        "mean": 35.8,
+        "median": 40.8,
+        "p95": 118.2,
+        "max": 118.2
+      }
+    }
+  },
+  "completion_all": {
+    "n": 38,
+    "wall_s": {
+      "mean": 100.7,
+      "median": 78.5,
+      "p95": 319.0,
+      "max": 340.0
+    },
+    "feed_min": {
+      "mean": 60.4,
+      "median": 47.1,
+      "p95": 191.4,
+      "max": 204.0
+    }
+  },
+  "makespan": {
+    "wall_s": 1795.0,
+    "feed_min": 1077.0
+  },
+  "jobs_total": 38,
+  "jobs_completed": 38,
+  "submit_rejections": 0,
+  "gate": {
+    "jobs_kept_held": 4,
+    "releases": 20,
+    "reholds": 1,
+    "excludes_updated": 1
+  },
+  "rejected_at_submit_all_qpus_out": [],
+  "recal_overlap": {
+    "count": 0,
+    "jobs": [],
+    "total_overlap_wall_s": 0,
+    "total_overlap_feed_min": 0.0
+  },
+  "rechecks_badconstraints": [],
+  "transitions": {
+    "QPU_OUT": 6,
+    "QPU_IN": 6
+  },
+  "polls": 191,
+  "polls_with_qpu_out": 59,
+  "qpu_job_pending_while_qpu_out": {
+    "count": 23,
+    "first": [
+      {
+        "wall": "2026-11-23T21:34:50Z",
+        "feed_time": "2026-11-01T04:27:10Z",
+        "qpus_out_on": [
+          "c1"
+        ],
+        "job": "1127",
+        "name": "hybrid-003",
+        "reason": "Resources"
+      },
+      {
+        "wall": "2026-11-23T21:35:00Z",
+        "feed_time": "2026-11-01T04:33:13Z",
+        "qpus_out_on": [
+          "c1"
+        ],
+        "job": "1127",
+        "name": "hybrid-003",
+        "reason": "Resources"
+      },
+      {
+        "wall": "2026-11-23T21:35:10Z",
+        "feed_time": "2026-11-01T04:39:16Z",
+        "qpus_out_on": [
+          "c1"
+        ],
+        "job": "1127",
+        "name": "hybrid-003",
+        "reason": "Resources"
+      }
+    ]
+  },
+  "classical_running_on_qpu_out_node": {
+    "count": 25,
+    "first": [
+      {
+        "wall": "2026-11-23T21:35:20Z",
+        "feed_time": "2026-11-01T04:45:21Z",
+        "node": "c1",
+        "job": "1129",
+        "name": "classical-005"
+      },
+      {
+        "wall": "2026-11-23T21:35:30Z",
+        "feed_time": "2026-11-01T04:51:24Z",
+        "node": "c1",
+        "job": "1129",
+        "name": "classical-005"
+      },
+      {
+        "wall": "2026-11-23T21:35:40Z",
+        "feed_time": "2026-11-01T04:57:28Z",
+        "node": "c1",
+        "job": "1129",
+        "name": "classical-005"
+      }
+    ]
+  },
+  "checks": {
+    "0_all_jobs_completed": true,
+    "1_qpu_taken_out_and_restored": true,
+    "2_qpu_job_pending_while_qpu_out": true,
+    "3_classical_running_on_qpu_out_node": true
+  },
+  "forecast_err_min": 120,
+  "forecast": {
+    "recals_in_run": [
+      {
+        "qpu": "qpu1",
+        "node": "c2",
+        "kind": "full",
+        "true_start": "2026-11-01T02:38:06Z",
+        "published_start": "2026-11-01T01:47:53Z",
+        "offset_min": -50.22,
+        "direction": "later_than_published",
+        "overlap_jobs": 0,
+        "overlap_wall_s": 0.0,
+        "overlap_feed_min": 0.0
+      },
+      {
+        "qpu": "qpu0",
+        "node": "c1",
+        "kind": "full",
+        "true_start": "2026-11-01T04:25:47Z",
+        "published_start": "2026-11-01T02:40:43Z",
+        "offset_min": -105.07,
+        "direction": "later_than_published",
+        "overlap_jobs": 0,
+        "overlap_wall_s": 0.0,
+        "overlap_feed_min": 0.0
+      },
+      {
+        "qpu": "qpu1",
+        "node": "c2",
+        "kind": "quick",
+        "true_start": "2026-11-01T10:02:02Z",
+        "published_start": "2026-11-01T11:36:22Z",
+        "offset_min": 94.33,
+        "direction": "earlier_than_published",
+        "overlap_jobs": 0,
+        "overlap_wall_s": 0.0,
+        "overlap_feed_min": 0.0
+      },
+      {
+        "qpu": "qpu0",
+        "node": "c1",
+        "kind": "quick",
+        "true_start": "2026-11-01T12:12:58Z",
+        "published_start": "2026-11-01T13:16:42Z",
+        "offset_min": 63.73,
+        "direction": "earlier_than_published",
+        "overlap_jobs": 0,
+        "overlap_wall_s": 0.0,
+        "overlap_feed_min": 0.0
+      },
+      {
+        "qpu": "qpu1",
+        "node": "c2",
+        "kind": "quick",
+        "true_start": "2026-11-01T16:33:57Z",
+        "published_start": "2026-11-01T16:45:36Z",
+        "offset_min": 11.65,
+        "direction": "earlier_than_published",
+        "overlap_jobs": 0,
+        "overlap_wall_s": 0.0,
+        "overlap_feed_min": 0.0
+      },
+      {
+        "qpu": "qpu0",
+        "node": "c1",
+        "kind": "quick",
+        "true_start": "2026-11-01T18:39:37Z",
+        "published_start": "2026-11-01T19:26:42Z",
+        "offset_min": 47.08,
+        "direction": "earlier_than_published",
+        "overlap_jobs": 0,
+        "overlap_wall_s": 0.0,
+        "overlap_feed_min": 0.0
+      }
+    ],
+    "overlap_by_direction": {
+      "earlier_than_published": {
+        "jobs": 0,
+        "wall_s": 0.0,
+        "feed_min": 0.0
+      },
+      "later_than_published": {
+        "jobs": 0,
+        "wall_s": 0.0,
+        "feed_min": 0.0
+      },
+      "exact": {
+        "jobs": 0,
+        "wall_s": 0.0,
+        "feed_min": 0.0
+      },
+      "unmatched": {
+        "jobs": 0,
+        "wall_s": 0.0,
+        "feed_min": 0.0
+      }
+    },
+    "recals_by_direction": {
+      "earlier_than_published": 4,
+      "later_than_published": 2,
+      "exact": 0
+    }
+  }
+}
