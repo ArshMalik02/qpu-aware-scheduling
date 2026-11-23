@@ -17,8 +17,11 @@ Mechanism on 26.05.2 (no HRES):
   - About every second, for each pending QPU job, the gate computes which QPUs fit:
       held  + some fit  -> scontrol update ExcNodeList=<nodes that don't fit>, release
       held  + none fit  -> stay held (logged once as gate_hold)
-      released, pending + none fit any more -> scontrol hold (gate_rehold)
+      released, pending + none fit any more -> scontrol uhold (gate_rehold)
       released, pending + fitting set changed -> update ExcNodeList (gate_exclude)
+    That table is decide(), a pure function. "Held" is reason JobHeldUser or JobHeldAdmin:
+    the gate runs as root, and as root `scontrol hold` is an admin hold (JobHeldAdmin),
+    so re-holds use `scontrol uhold` (JobHeldUser) and both reasons count as held.
   - Between feed polls, feed time is extrapolated from the last poll at --feed-speed.
 
 Difference from an HRES prerun gate: HRES evaluates a job at its prerun, just before
@@ -69,10 +72,18 @@ def parse_slurm_limit(s: str) -> float | None:
     return days * 86400 + h * 3600 + m * 60 + sec
 
 
-def fits(status: str, now_feed: datetime, limit_feed_s: float, poll_feed_s: float,
-         next_recal_start: datetime | None) -> bool:
-    """The admission rule (pure): QPU online and the job ends before the next recal."""
-    if status != "online":
+HELD_REASONS = ("JobHeldUser", "JobHeldAdmin")
+
+
+def fits(status: str | None, now_feed: datetime, limit_feed_s: float, poll_feed_s: float,
+         next_recal_start: datetime | None, healthy: bool | None = True) -> bool:
+    """The admission rule (pure): QPU online and healthy, and the job ends before the next recal.
+
+    healthy=False doesn't fit, matching reactive.py's layer-disable rule
+    (status != "online" or healthy == false). A next_recal.start already in the past
+    never fits.
+    """
+    if status != "online" or healthy is False:
         return False
     if next_recal_start is None:
         return True
@@ -89,9 +100,30 @@ def fitting_nodes(states: dict[str, dict], mapping: dict[str, str], now_feed: di
             continue
         nr = (st.get("next_recal") or {}).get("start")
         if fits(st.get("status"), now_feed[qpu], limit_wall_s * speed, interval_s * speed,
-                parse_feed_time(nr)):
+                parse_feed_time(nr), st.get("healthy")):
             out.append(node)
     return sorted(out)
+
+
+def decide(held: bool, fitting: list[str], all_nodes: list[str],
+           current_exc: tuple[str, ...] | None) -> tuple[str, tuple[str, ...] | None]:
+    """The gate's per-job decision (pure) -> (action, ExcNodeList to set).
+
+    action is one of:
+      release  held, some QPU fits: set ExcNodeList to the non-fitting nodes, release
+      stay     held, no QPU fits: keep it held
+      rehold   released (still pending), no QPU fits any more: hold it again
+      exclude  released, fitting set changed: update ExcNodeList
+      nothing  released, same fitting set
+    """
+    exc = tuple(n for n in all_nodes if n not in fitting)
+    if held:
+        return ("release", exc) if fitting else ("stay", current_exc)
+    if not fitting:
+        return "rehold", current_exc
+    if exc != current_exc:
+        return "exclude", exc
+    return "nothing", current_exc
 
 
 class PredictiveLoop(Loop):
@@ -143,27 +175,25 @@ class PredictiveLoop(Loop):
             if limit_s is None:
                 continue
             ok = fitting_nodes(states, self.mapping, now, limit_s, self.speed, self.interval)
-            exc = tuple(n for n in self.mapping.values() if n not in ok)
-            j = self.jobs.setdefault(jid, {"held": reason == "JobHeldUser", "exc": None, "gated": False})
-            held = reason == "JobHeldUser"
-            if held:
-                if ok:
-                    run("scontrol", "update", f"JobId={jid}", f"ExcNodeList={','.join(exc)}")
-                    run("scontrol", "release", jid)
-                    j.update(held=False, exc=exc)
-                    self.log_gate("gate_release", jid, limit_s, ok, now)
-                elif not j["gated"]:
-                    j["gated"] = True
-                    self.log_gate("gate_hold", jid, limit_s, ok, now)
-            else:
-                if not ok:
-                    run("scontrol", "hold", jid)
-                    j.update(held=True, gated=True)
-                    self.log_gate("gate_rehold", jid, limit_s, ok, now)
-                elif exc != j["exc"]:
-                    run("scontrol", "update", f"JobId={jid}", f"ExcNodeList={','.join(exc)}")
-                    j["exc"] = exc
-                    self.log_gate("gate_exclude", jid, limit_s, ok, now)
+            held = reason in HELD_REASONS
+            j = self.jobs.setdefault(jid, {"exc": None, "gated": False})
+            action, exc = decide(held, ok, list(self.mapping.values()), j["exc"])
+            if action == "release":
+                run("scontrol", "update", f"JobId={jid}", f"ExcNodeList={','.join(exc)}")
+                run("scontrol", "release", jid)
+                j["exc"] = exc
+                self.log_gate("gate_release", jid, limit_s, ok, now)
+            elif action == "stay" and not j["gated"]:
+                j["gated"] = True
+                self.log_gate("gate_hold", jid, limit_s, ok, now)
+            elif action == "rehold":
+                run("scontrol", "uhold", jid)
+                j["gated"] = True
+                self.log_gate("gate_rehold", jid, limit_s, ok, now)
+            elif action == "exclude":
+                run("scontrol", "update", f"JobId={jid}", f"ExcNodeList={','.join(exc)}")
+                j["exc"] = exc
+                self.log_gate("gate_exclude", jid, limit_s, ok, now)
         for jid in list(self.jobs):
             if jid not in seen:
                 del self.jobs[jid]

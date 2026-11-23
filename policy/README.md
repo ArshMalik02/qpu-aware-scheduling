@@ -45,13 +45,24 @@ make sweep SEEDS="1 2 3 4 5" POLICIES="static reactive predictive"   # prints it
 make aggregate                                               # re-run aggregate + chart on existing results
 ```
 
+**Unattended sweep (e.g. overnight):**
+```bash
+nohup make sweep SEEDS="1 2 3 4 5" > results/sweep.log 2>&1 &
+tail -f results/sweep.log      # ends with PASS or FAIL
+```
+- **Resume:** run the same command again. Any policy/seed whose `summary.json` has every check passing is skipped (`FORCE=1` re-runs it), and a failed run is retried once.
+- **Clean starts:** a leftover queue before a run is cancelled and waited out. On any early exit, including a signal, `run_baseline.sh` stops `gen.py`, cancels the run's jobs, waits for an empty queue and stops the loop, which restores both QPUs. So the next run starts clean.
+
 For seed N, every policy uses workload seed N and feed seed 100+N. Results go to `results/<policy>/seed<N>/`. `aggregate.py` writes
 `results/sweep_summary.csv` (one row per policy × seed) and `results/sweep_table.md` (median and min–max across seeds), and `plot_sweep.py` writes
 `results/sweep.png`. The sweep uses `RUN_MIN=30`.
 
 **Predictive mechanism (26.05.2):**
 - QPU jobs are submitted held (`gen.py --hold-qpu`).
-- About every second, the gate releases a held job once at least one QPU fits it. It sets `ExcNodeList` to the QPUs that don't fit, and holds a released job again if none fit any more.
+- About every second, the gate releases a held job once at least one QPU fits it. It sets `ExcNodeList` to the QPUs that don't fit, and holds a released job again (`scontrol uhold`) if none fit any more. The per-job decision is the pure function `decide()`.
+- "Held" means reason `JobHeldUser` or `JobHeldAdmin`. The gate runs as root, and a root `scontrol hold` is an admin hold.
+- A QPU fits only if it's online, `healthy` isn't false, and `next_recal.start` is far enough ahead; a recal start already in the past never fits.
+- [`repro_rehold.sh`](repro_rehold.sh) checks release → re-hold → release against a stub feed (run it on an idle cluster).
 - The rule uses the time limit Slurm enforces, which is rounded up to whole minutes, converted to feed time with `feed_speed`.
 - Unlike an HRES prerun gate, the decision is made outside the scheduler, so it can lag by ~1 s.
 - A held submit is accepted even while every QPU is out. So predictive never has submit rejections, and that column isn't comparable across policies.
@@ -96,12 +107,13 @@ given in wall seconds. At the default 36× speed a 45 s hold is 27 feed minutes,
 
 ## Recal overlap (the cross-policy metric)
 
-`recal_overlap()` in `summarize.py` counts the QPU and hybrid jobs that were **RUNNING on a node at the
-moment its QPU went out** (a `QPU_OUT` in `transitions.log`). For each one it measures the overlap,
-`min(job end, next QPU_IN on that node) − QPU_OUT time`, in wall seconds and feed minutes. That's how
-long the job kept using a QPU the feed said was recalibrating. A reactive policy can't avoid this,
-since it only reacts once the recal has started. It's the number a predictive policy should bring
-down.
+`recal_overlap()` in `summarize.py` treats each `QPU_OUT` → next `QPU_IN` on a node (from
+`transitions.log`; no `QPU_IN` → run end) as a recal window. A QPU or hybrid job's overlap is the
+intersection of its `[start, end)` with every window on its node, summed, in wall seconds and feed
+minutes: how long it used a QPU the feed said was recalibrating.
+- This counts jobs already running when the recal starts, and jobs that start during it.
+- Reactive removes the second kind (up to its poll lag), but can't avoid the first, since it only reacts once the recal has started.
+- The first kind is what a predictive policy should bring down.
 
 The metric needs only `jobs.csv` and `transitions.log`, so it's computed the same way for every
 policy. For a policy that doesn't take QPUs out (e.g. static), run the loop with

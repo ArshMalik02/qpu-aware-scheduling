@@ -138,7 +138,7 @@
   "jobs_completed": 55,
   "submit_rejections": 0,
   "gate": {
-    "jobs_held_by_gate": 7,
+    "jobs_kept_held": 7,
     "releases": 32,
     "reholds": 0,
     "excludes_updated": 7

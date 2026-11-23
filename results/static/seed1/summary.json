@@ -138,36 +138,90 @@
   "jobs_completed": 55,
   "submit_rejections": 0,
   "gate": {
-    "jobs_held_by_gate": 0,
+    "jobs_kept_held": 0,
     "releases": 0,
     "reholds": 0,
     "excludes_updated": 0
   },
   "rejected_at_submit_all_qpus_out": [],
   "recal_overlap": {
-    "count": 2,
+    "count": 6,
     "jobs": [
-      {
-        "job_id": "219",
-        "name": "qpu-033",
-        "type": "qpu",
-        "node": "c1",
-        "qpu_out_at": "2026-11-22T23:40:12Z",
-        "overlap_wall_s": 70.0,
-        "overlap_feed_min": 42.0
-      },
       {
         "job_id": "198",
         "name": "hybrid-012",
         "type": "hybrid",
         "node": "c2",
-        "qpu_out_at": "2026-11-22T23:28:20Z",
+        "qpu_out_at": [
+          "2026-11-22T23:28:20Z"
+        ],
+        "started_inside_window": false,
         "overlap_wall_s": 45.0,
         "overlap_feed_min": 27.0
+      },
+      {
+        "job_id": "200",
+        "name": "qpu-014",
+        "type": "qpu",
+        "node": "c1",
+        "qpu_out_at": [
+          "2026-11-22T23:27:09Z"
+        ],
+        "started_inside_window": true,
+        "overlap_wall_s": 59.0,
+        "overlap_feed_min": 35.4
+      },
+      {
+        "job_id": "204",
+        "name": "hybrid-018",
+        "type": "hybrid",
+        "node": "c2",
+        "qpu_out_at": [
+          "2026-11-22T23:28:20Z"
+        ],
+        "started_inside_window": true,
+        "overlap_wall_s": 5.0,
+        "overlap_feed_min": 3.0
+      },
+      {
+        "job_id": "206",
+        "name": "hybrid-020",
+        "type": "hybrid",
+        "node": "c2",
+        "qpu_out_at": [
+          "2026-11-22T23:28:20Z"
+        ],
+        "started_inside_window": true,
+        "overlap_wall_s": 2.0,
+        "overlap_feed_min": 1.2
+      },
+      {
+        "job_id": "219",
+        "name": "qpu-033",
+        "type": "qpu",
+        "node": "c1",
+        "qpu_out_at": [
+          "2026-11-22T23:40:12Z"
+        ],
+        "started_inside_window": false,
+        "overlap_wall_s": 70.0,
+        "overlap_feed_min": 42.0
+      },
+      {
+        "job_id": "223",
+        "name": "qpu-037",
+        "type": "qpu",
+        "node": "c2",
+        "qpu_out_at": [
+          "2026-11-22T23:41:42Z"
+        ],
+        "started_inside_window": true,
+        "overlap_wall_s": 13.0,
+        "overlap_feed_min": 7.8
       }
     ],
-    "total_overlap_wall_s": 115.0,
-    "total_overlap_feed_min": 69.0
+    "total_overlap_wall_s": 194.0,
+    "total_overlap_feed_min": 116.4
   },
   "rechecks_badconstraints": [],
   "transitions": {

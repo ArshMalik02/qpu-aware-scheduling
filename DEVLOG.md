@@ -4,14 +4,21 @@ Everything here is **simulated**: the QPUs are Slurm GRES counters, the jobs run
 
 **Per-job time limits.** Every job used to get `--time=00:10:00`, far longer than any hold (max 240 s), and a rule based on time limits would have blocked almost everything. `gen.py` now sets `limit_s = ceil(hold_s × 1.5) + 30` as `--time=MM:SS`. **Slurm rounds limits up to whole minutes:** `--time=01:45` became `TimeLimit=00:02:00` on 26.05.2. So the manifest also records `slurm_limit_s`, and the predictive rule uses the limit Slurm enforces (read from `squeue %l`), not the requested one. A test checks that `hold_s < limit_s ≤ slurm_limit_s`. The same manifest is used for all three policies.
 
-**The rule** (`policy/predictive.py`, pure function `fits()`): a QPU job may start on a QPU only if that QPU is online and, in feed time, `now + limit + one poll interval ≤ next_recal.start`. Wall time is converted to feed time with `feed_speed` from `run_config.json`, so at 36× a 2-minute limit is 72 feed minutes and the 10 s poll adds 6. Unit tests cover: fits, doesn't fit, the exact boundary, a recal already running, two QPUs with one fitting, and none or both fitting.
+**The rule** (`policy/predictive.py`, pure function `fits()`): a QPU job may start on a QPU only if that QPU is online (with `healthy` not false) and, in feed time, `now + limit + one poll interval ≤ next_recal.start`. Wall time is converted to feed time with `feed_speed` from `run_config.json`, so at 36× a 2-minute limit is 72 feed minutes and the 10 s poll adds 6. Unit tests cover: fits, doesn't fit, the exact boundary, a recal already running, two QPUs with one fitting, and none or both fitting.
 
 **Mechanism on 26.05.2** (no HRES):
 - QPU jobs are submitted held (`gen.py --hold-qpu`).
-- About every second, the gate computes which QPUs fit each pending QPU job. If some fit, it sets `scontrol update ExcNodeList=<nodes that don't fit>` and releases the job. If none fit, the job stays held. A released job that stops fitting is held again, and a changed fitting set updates `ExcNodeList`.
+- About every second, the gate computes which QPUs fit each pending QPU job. If some fit, it sets `scontrol update ExcNodeList=<nodes that don't fit>` and releases the job. If none fit, the job stays held. A released job that stops fitting is held again with `scontrol uhold`, and a changed fitting set updates `ExcNodeList`. This per-job table (held/released × fits/none/changed) is the pure function `decide()`, with unit tests.
+- **Hold reasons:** the gate runs as root, and as root `scontrol hold` is an *admin* hold. Checked live on 26.05.2: `scontrol hold` → `JobHeldAdmin`, `scontrol uhold` → `JobHeldUser`, `sbatch --hold` → `JobHeldUser`. The first version re-held with `scontrol hold` but only treated `JobHeldUser` as held. So a re-held job would have looked "released" forever and never been released (from reading the code; it never happened, because no re-hold fired in the smoke run). Now re-holds use `uhold`, and both reasons count as held.
+- **`fits()` edge cases (unit tests):** a `next_recal.start` already in the past doesn't fit; `status: online` with `healthy: false` doesn't fit, matching `reactive.py`'s rule; a QPU with no state yet doesn't fit.
 - The feed is still polled every 10 s. Between polls, feed time is extrapolated from the last poll at `feed_speed`, so held jobs aren't kept waiting for the next poll.
 - Every hold, release and exclude is logged to `transitions.log` with the job, its limit, and the time to each QPU's next recal (feed min).
 - Checked live against a stub feed. A job that fit only on c1 got `ExcNodeList=c2` and ran on c1. With both QPUs near a recal, a job stayed held until qpu1's recal moved out, then ran on c2.
+- **Re-hold, live** (`policy/repro_rehold.sh`, stub feed, 2026-11-23):
+  - Blockers held both QPUs, and job 355 (2-min limit = 72 feed min) was released and pended on `Resources`.
+  - The stub then moved both recals to 30 feed min out. The gate logged `gate_rehold`, and the job went to `JobHeldUser` within ~1 s.
+  - With qpu1's recal moved back to 600 min, it was released with `ExcNodeList=c1` and COMPLETED on c2.
+  - Gate events for the job: `gate_release gate_rehold gate_release`. PASS.
 
 **How this differs from an HRES prerun gate:** HRES evaluates a job in `hres_controller_job_prerun`, just before it would start, with `job.end_time = start + time limit`, and can say "not now" for that one scheduling attempt. Here the decision is made from outside the scheduler, ahead of time: there's up to ~1 s of gate lag, and a decision can be stale by the time Slurm picks the job. The comparison itself is the same, so it maps onto an HRES prerun gate later.
 
@@ -23,25 +30,42 @@ Everything here is **simulated**: the QPUs are Slurm GRES counters, the jobs run
 
 | Metric | static | reactive | predictive |
 |---|---|---|---|
-| Recal-overlap jobs | 2 | 2 | 0 |
-| Recal overlap (feed min) | 69 | 69 | 0 |
+| Recal-overlap jobs | 6 | 2 | 0 |
+| Recal overlap (feed min) | 116.4 | 69 | 0 |
 | QPU-only wait median / p95 | 0 / 16.2 | 0 / 81 | 2.4 / 121.8 |
 | Hybrid wait p95 | 1.2 | 6 | 156 |
 | Classical wait p95 | 1.2 | 1.2 | 13.2 |
 | Completion median / p95 | 22.2 / 79.2 | 22.2 / 111.6 | 32.4 / 172.8 |
 | Submit rejections | 0 | 0 | 0 |
-| Gate: jobs held / releases / re-holds | – | – | 7 / 32 / 0 |
+| Gate: jobs kept held at least once / releases / re-holds | – | – | 7 / 32 / 0 |
+
+**Recal overlap is the intersection of each QPU/hybrid job's [start, end) with every [QPU_OUT, QPU_IN) window on its node** (QPU_IN missing → run end). The first version counted only jobs already running at the QPU_OUT instant, which misses jobs that *start* during a recal. That happens mainly under static, which never takes a QPU out. Under reactive it can happen only within the ≤10 s poll lag, and it didn't in this run. Re-summarized from the committed seed-1 run directories (no re-run):
+- static: 6 jobs, 194 wall s = 116.4 feed min. `qpu-033` and `hybrid-012` were running at QPU_OUT; `qpu-014`, `hybrid-018`, `hybrid-020` and `qpu-037` started inside a window.
+- reactive: 2 jobs / 69 feed min.
+- predictive: 0.
+
+"Gate: jobs kept held at least once" counts jobs the gate found no fitting QPU for at least once. Every QPU job is submitted held under predictive, so "held" alone means nothing.
 
 What one seed shows:
-- Predictive removed both overlaps: `qpu-033` (42 feed min) and `hybrid-012` (27 feed min) ran into a recal under static and reactive.
+- Static: 6 jobs overlapped a recal (116.4 feed min).
+- Reactive: 2 (69 feed min). It stopped the four jobs that static let start inside a recal, but `qpu-033` (42 feed min) and `hybrid-012` (27 feed min) were already running when their recal began, and reactive only blocks new starts.
+- Predictive: 0. It didn't start those two, because they wouldn't have finished before the recal.
 - It pays for this in wait: QPU-only p95 went from 81 to 121.8 feed min and hybrid p95 from 6 to 156, because a job is held until it fits before the next recal.
-- Reactive doesn't reduce overlap relative to static here. Both overlapping jobs were already running when their QPU went out, and reactive only blocks new starts.
-- Classical p95 rose to 13.2 feed min (22 wall s) under predictive. My guess, not checked: released QPU jobs start in bunches and take the CPUs.
+- **p95 here is one job.** `stats()` takes the value at index int(0.95·n), so for n ≤ 20 the p95 *is* the max: QPU-only n = 19, hybrid n = 13. Reactive's 81 is `qpu-014` alone (next: 16.2). Classical (n = 23) p95 is the second-largest wait.
+- **Classical p95 rose to 13.2 feed min (22 wall s) under predictive.** `queue.log` shows the slow classical jobs (`classical-019`, `-024`, `-036`, `-039`: 11–24 wall s) PENDING with reason `Priority`, behind released QPU/hybrid jobs pending on `Resources`.
+  - `sacct -o Flags` shows all four were started by the backfill scheduler (`SchedBackfill`), not the main one. Under predictive, 7 of 23 classical jobs were started by backfill, against 1 under static and 0 under reactive.
+  - So the delay is backfill timing: the main scheduler won't start a lower-priority job behind a blocked one in the same partition, and backfill runs every `bf_interval`. That's 30 s by default, and this cluster sets no `SchedulerParameters`.
+  - The flags are verified. That the default is 30 s and that the main scheduler stops at the blocked job come from Slurm's documented behaviour; I didn't check them against slurmctld's logs.
 - Makespan is identical (1816 wall s) in all three, because the last job to finish is a late classical arrival.
-- The re-hold path (`gate_rehold`) wasn't triggered in this run.
+- The re-hold path (`gate_rehold`) wasn't triggered in this run; it was exercised separately against a stub feed (above).
 - This is one seed, so these are observations, not a result.
 
 **Full sweep estimate:** `make sweep SEEDS="1 2 3 4 5"` is 15 runs at about 36 min each (30 min of arrivals, drain, setup), so about 540 min (9 h). The worst case, if every queue uses its full 15-min drain, is 15 × 47 = 705 min. The seed-1 smoke run took 92 min for three runs (23:20–00:52 UTC), about 31 min per run.
+
+**Unattended sweep:**
+- **Resume:** `run_sweep.sh` skips any policy/seed whose `summary.json` has every check passing (`FORCE=1` re-runs it), and retries a failed run once. So after an interruption, re-running the same command resumes. With seed 1 already committed, the 5-seed sweep runs the other 12 (about 432 min, 7.2 h).
+- **Cleanup on failure:** `run_baseline.sh` cancels a leftover queue and waits for it to empty instead of failing, and waits again after the drain-timeout `scancel`. On any early exit, including a signal, an EXIT trap stops `gen.py`, cancels the run's jobs, waits for an empty queue and stops the loop, which restores both QPUs.
+- **Tested:** SIGTERM mid-submit exits in ~1 s with an empty queue and both QPUs at `qpu:1`. A leftover job before a run is cancelled by the preflight.
 
 ## 2026-11-18: Reactive up/down loop (HRES-like) on 26.05.2
 
@@ -64,7 +88,7 @@ So the DRAIN/RESUME fallback isn't needed, and CPU-only jobs keep running while 
 - starts the feed as a sidecar (`docker compose --profile reactive`, seed 42, 36× speed, so ~30 min of wall time ≈ 18 h of feed time);
 - runs `policy/reactive.py` in slurmctld: it polls every 10 s and sets `Gres=qpu:0/1` per node, with qpu0→c1 and qpu1→c2;
 - submits `workload/gen.py --seed 1`: 35 jobs over 20 min, 12 QPU-only Bell, 8 hybrid toy-VQE (`-c2`) and 15 classical, each holding its resources for a seeded, *assumed* time;
-- drains the queue, restores the QPUs, and writes everything to `results/reactive/seed1/`.
+- drains the queue, restores the QPUs, and writes everything to `results/reactive/seed<N>/`. That run's results are in `results/archive/pr4-week4-reactive/seed1-x86_64/`.
 
 **What broke:**
 1. *All QPUs out → sbatch rejects QPU jobs.* The first full run died when `sbatch --gres=qpu:1` failed with `Requested node configuration is not available`. That happens while the two daily full recals overlap (feed ≈ 03:55–04:13), because with `qpu:0` on every node, no node is configured for the job at all. HRES would accept the job and hold it with `HRESDisabled`. Fix: `gen.py` retries those jobs every 5 s without delaying other arrivals, logs `submit_delay_s`, and `summarize.py` counts that delay as QPU wait. In the passing run, `hybrid-012` was rejected once and accepted 5 s later.
@@ -96,7 +120,7 @@ queue.log 22:45:03Z feed 02:42:52  qpus {c1: 0, c2: 1}
 jobs.csv: qpu-006 submit 22:44:55, start 22:45:34 on c2 → QPU wait 39 s / 23.4 feed min
 ```
 
-**aarch64 (M1) run.** `make baseline-reactive SEED=1` also passed on the M1 Mac (Docker Desktop), in `results/reactive/seed1-aarch64/`. Same config (feed seed 42, 36×, 20 min at 1.5/min), and the manifest is byte-identical to the x86_64 run. Before it, the M1 cluster needed `scontrol delete nodename=c1,c2` plus a worker restart: both nodes were DOWN and c1's stored record showed GRES `(null)`, another stale controller record.
+**aarch64 (M1) run.** `make baseline-reactive SEED=1` also passed on the M1 Mac (Docker Desktop), in `results/archive/pr4-week4-reactive/seed1-aarch64/`. Same config (feed seed 42, 36×, 20 min at 1.5/min), and the manifest is byte-identical to the x86_64 run. Before it, the M1 cluster needed `scontrol delete nodename=c1,c2` plus a worker restart: both nodes were DOWN and c1's stored record showed GRES `(null)`, another stale controller record.
 
 | Simulated, wall s / feed min | aarch64 (M1) | x86_64 (Linux) |
 |---|---|---|

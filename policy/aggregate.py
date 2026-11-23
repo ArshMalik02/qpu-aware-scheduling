@@ -48,7 +48,7 @@ def row_for(policy: str, seed: int, s: dict) -> dict:
     r["makespan_wall_s"] = g(s, "makespan", "wall_s")
     r["makespan_feed_min"] = g(s, "makespan", "feed_min")
     r["submit_rejections"] = s.get("submit_rejections")
-    r["gate_jobs_held"] = g(s, "gate", "jobs_held_by_gate")
+    r["gate_jobs_kept_held"] = g(s, "gate", "jobs_kept_held")
     r["gate_reholds"] = g(s, "gate", "reholds")
     r["badconstraints_rechecks"] = len(s.get("rechecks_badconstraints", []))
     r["checks_pass"] = all(s.get("checks", {}).values()) if s.get("checks") else None
@@ -78,7 +78,8 @@ TABLE = [  # (label, column, unit)
     ("Completion p95 (feed min)", "completion_p95_feed_min", ""),
     ("Jobs completed", "jobs_completed", ""),
     ("Submit rejections", "submit_rejections", ""),
-    ("Gate: jobs held", "gate_jobs_held", ""),
+    ("Gate: jobs kept held at least once", "gate_jobs_kept_held", ""),
+    ("Gate: re-holds", "gate_reholds", ""),
 ]
 
 
@@ -94,6 +95,9 @@ def table_md(rows: list[dict]) -> str:
     out = ["# Sweep results (simulated)", "",
            "Median across seeds, with [min–max] across seeds. Drift, recal schedule and job times are "
            "assumed; all numbers are from the Docker cluster with a simulated feed, not hardware.", "",
+           "p95 is the value at index int(0.95·n) of the sorted waits, so for n ≤ 20 it is the "
+           "maximum: one job. Every QPU job is submitted held under "
+           "predictive; the gate rows count jobs it kept held (no QPU fitted) at least once.", "",
            "| Metric | " + " | ".join(f"{p} (seeds {','.join(map(str, seeds[p]))})" for p in policies) + " |",
            "|---|" + "---|" * len(policies)]
     for label, col, _ in TABLE:

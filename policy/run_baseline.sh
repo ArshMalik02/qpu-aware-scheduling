@@ -14,6 +14,10 @@
 #   RUN_MIN       workload arrival window in minutes (default 20; the sweep uses 30)
 #   RATE_PER_MIN  mean job arrivals per minute (default 1.5)
 #   DRAIN_MIN     max minutes to wait for the queue to empty afterwards (default 15)
+#
+# Unattended-safe: a non-empty queue before the run is cancelled (and waited out) instead
+# of failing; on any early exit the trap cancels this run's jobs, waits for the queue to
+# empty and stops the loop (which restores every QPU), so the next run starts clean.
 set -euo pipefail
 
 POLICY=${POLICY:-reactive}
@@ -39,6 +43,27 @@ ctl() { docker exec slurmctld "$@"; }
 cd "$(dirname "$0")/.."
 
 stop_loop() { ctl pkill -TERM -f "/data/policy/(reactive|predictive).py" >/dev/null 2>&1 || true; }
+queue_empty() { [ -z "$(ctl squeue -h 2>/dev/null)" ]; }
+# cancel_and_wait <why>: scancel everything, then wait (up to 2 min) until squeue is empty.
+cancel_and_wait() {
+    echo "    $1: cancelling $(ctl squeue -h 2>/dev/null | wc -l) job(s) and waiting for an empty queue"
+    ctl scancel -u root >/dev/null 2>&1 || true
+    for _ in $(seq 1 60); do queue_empty && return 0; sleep 2; done
+    echo "    queue still not empty after 2 min:" >&2
+    ctl squeue -h -o "    %i %j %T %r" >&2 || true
+    return 1
+}
+finished=0
+on_exit() {
+    local rc=$?
+    [ "$finished" = 1 ] && return
+    echo "==> Early exit (rc=$rc): cleaning up so the next run starts clean" >&2
+    ctl pkill -TERM -f "/data/workload/gen.py" >/dev/null 2>&1 || true  # stop submitting first
+    cancel_and_wait "early exit" || true
+    stop_loop
+}
+trap on_exit EXIT
+trap 'exit 130' INT TERM HUP  # so a killed run still goes through on_exit
 
 echo "==> [$POLICY seed $SEED] cluster + feed sidecar (feed seed $FEED_SEED, speed ${FEED_SPEED}x; simulated)"
 ( cd cluster && docker compose --profile reactive up -d >/dev/null && \
@@ -65,9 +90,8 @@ if [ -n "$bad" ]; then
     echo "$bad" >&2
     exit 1
 fi
-if [ -n "$(ctl squeue -h)" ]; then
-    echo "FAIL: queue not empty before the run" >&2
-    exit 1
+if ! queue_empty; then
+    cancel_and_wait "queue not empty before the run" || { echo "FAIL: could not empty the queue" >&2; exit 1; }
 fi
 ctl sinfo -N -n c1,c2 -o "    %N %G %t"
 
@@ -86,12 +110,13 @@ printf '{"policy": "%s", "seed": %s, "feed_seed": %s, "feed_speed": %s, "run_min
 
 echo "==> Starting the $POLICY loop (poll ${INTERVAL_S} s, qpu0->c1, qpu1->c2)"
 ctl bash -c "cd /data/policy && nohup $LOOP --out-dir $RUN > $RUN/loop.out 2>&1 &"
-trap 'stop_loop' EXIT
 
 echo "==> Submitting the seeded workload (seed $SEED, ${RUN_MIN} min, ${RATE_PER_MIN}/min)"
+# In the background + wait, so a signal reaches the trap now, not after the arrival window.
 ctl python3 /data/workload/gen.py --seed "$SEED" --duration-min "$RUN_MIN" \
     --rate-per-min "$RATE_PER_MIN" --manifest "$RUN/manifest.json" --submit $HOLD \
-    --out-dir "$RUN/jobs" --submit-log "$RUN/submitted.log"
+    --out-dir "$RUN/jobs" --submit-log "$RUN/submitted.log" &
+wait $!
 
 echo "==> Waiting for the queue to drain (max ${DRAIN_MIN} min)"
 for _ in $(seq 1 $((DRAIN_MIN * 6))); do
@@ -101,13 +126,12 @@ done
 if [ -n "$(ctl squeue -h)" ]; then
     echo "    queue not empty after ${DRAIN_MIN} min; cancelling the rest"
     ctl squeue -h -o "    %i %j %T %r"
-    ctl scancel -u root || true
+    cancel_and_wait "drain timeout" || true
 fi
 
 echo "==> Stopping the loop (restores every QPU)"
 stop_loop
 for _ in $(seq 1 20); do ctl pgrep -f "/data/policy/(reactive|predictive).py" >/dev/null || break; sleep 1; done
-trap - EXIT
 ctl sinfo -N -o "%N %G %t"
 
 sleep 3  # accounting
@@ -123,4 +147,5 @@ for f in run_config.json manifest.json submitted.log transitions.log queue.log l
     docker cp --quiet "slurmctld:$RUN/$f" "$DEST/$f"
 done
 echo "    copied to $DEST/"
+finished=1
 exit $status
