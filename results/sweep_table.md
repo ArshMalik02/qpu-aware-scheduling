@@ -2,7 +2,7 @@
 
 Median across seeds, with [min–max] across seeds. Drift, recal schedule and job times are assumed; all numbers are from the Docker cluster with a simulated feed, not hardware.
 
-p95 is the value at index int(0.95·n) of the sorted waits, so for n ≤ 20 (QPU-only and hybrid here) it is the maximum: one job. Every QPU job is submitted held under predictive; the gate rows count jobs it kept held (no QPU fitted) at least once.
+p95 is the value at index int(0.95·n) of the sorted waits, so for n ≤ 20 it is the maximum: one job. Every QPU job is submitted held under predictive; the gate rows count jobs it kept held (no QPU fitted) at least once.
 
 | Metric | static (seeds 1) | reactive (seeds 1) | predictive (seeds 1) |
 |---|---|---|---|

@@ -39,7 +39,7 @@ Everything here is **simulated**: the QPUs are Slurm GRES counters, the jobs run
 | Submit rejections | 0 | 0 | 0 |
 | Gate: jobs kept held at least once / releases / re-holds | – | – | 7 / 32 / 0 |
 
-**Recal overlap is the intersection of each QPU/hybrid job's [start, end) with every [QPU_OUT, QPU_IN) window on its node** (QPU_IN missing → run end). The first version counted only jobs already running at the QPU_OUT instant, which misses jobs that *start* during a recal. That happens mainly under static, which never takes a QPU out. Under reactive it can happen only within the ≤10 s poll lag, and it didn't in this run. Re-summarized from the committed seed-1 run directories (no re-run):
+**Recal overlap is the intersection of each QPU/hybrid job's [start, end) with every [QPU_OUT, QPU_IN) window on its node** (QPU_IN missing → run end). The first version counted only jobs already running at the QPU_OUT instant, which misses jobs that *start* during a recal. That happens mainly under static, which never takes a QPU out. Under reactive a job can still start on a QPU in the ≤10 s between the recal starting and the loop's next poll. But the window starts at the *logged* QPU_OUT (the poll time), so such starts aren't visible to the metric: they count as jobs already running at QPU_OUT. The same poll lag applies to every policy's windows. Re-summarized from the committed seed-1 run directories (no re-run):
 - static: 6 jobs, 194 wall s = 116.4 feed min. `qpu-033` and `hybrid-012` were running at QPU_OUT; `qpu-014`, `hybrid-018`, `hybrid-020` and `qpu-037` started inside a window.
 - reactive: 2 jobs / 69 feed min.
 - predictive: 0.
@@ -49,7 +49,7 @@ Everything here is **simulated**: the QPUs are Slurm GRES counters, the jobs run
 What one seed shows:
 - Static: 6 jobs overlapped a recal (116.4 feed min).
 - Reactive: 2 (69 feed min). It stopped the four jobs that static let start inside a recal, but `qpu-033` (42 feed min) and `hybrid-012` (27 feed min) were already running when their recal began, and reactive only blocks new starts.
-- Predictive: 0. It didn't start those two, because they wouldn't have finished before the recal.
+- Predictive: 0. It didn't start those two, because their time limits didn't fit before the recal.
 - It pays for this in wait: QPU-only p95 went from 81 to 121.8 feed min and hybrid p95 from 6 to 156, because a job is held until it fits before the next recal.
 - **p95 here is one job.** `stats()` takes the value at index int(0.95·n), so for n ≤ 20 the p95 *is* the max: QPU-only n = 19, hybrid n = 13. Reactive's 81 is `qpu-014` alone (next: 16.2). Classical (n = 23) p95 is the second-largest wait.
 - **Classical p95 rose to 13.2 feed min (22 wall s) under predictive.** `queue.log` shows the slow classical jobs (`classical-019`, `-024`, `-036`, `-039`: 11–24 wall s) PENDING with reason `Priority`, behind released QPU/hybrid jobs pending on `Resources`.

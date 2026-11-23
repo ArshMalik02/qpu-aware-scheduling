@@ -6,12 +6,13 @@
 # so recal timing varies between seeds but not between policies. Runs are sequential
 # on one machine (they share the cluster).
 #
-# Resumable: a policy/seed whose results/<policy>/seed<N>/summary.json exists with every
-# check passing is skipped (FORCE=1 re-runs it). A failed run is retried once. So after an
-# interruption, re-run the same command and it picks up where it stopped.
+# Resumable: a policy/seed is skipped (FORCE=1 re-runs it) if its
+# results/<policy>/seed<N>/summary.json has every check passing and its run_config.json
+# has this sweep's feed seed (100+N), RUN_MIN and FEED_SPEED. A failed run is retried
+# once. So after an interruption, re-run the same command and it picks up where it stopped.
 #
 # Unattended (e.g. overnight), from the repo root:
-#   nohup make sweep SEEDS="1 2 3 4 5" > results/sweep.log 2>&1 &
+#   setsid nohup make sweep SEEDS="1 2 3 4 5" > results/sweep.log 2>&1 < /dev/null &
 #   tail -f results/sweep.log           # progress; ends with PASS or FAIL
 #
 # Env: SEEDS (default "1"), POLICIES (default "static reactive predictive"), FORCE (0),
@@ -27,12 +28,18 @@ export RATE_PER_MIN=${RATE_PER_MIN:-1.5}
 export DRAIN_MIN=${DRAIN_MIN:-15}
 cd "$(dirname "$0")/.."
 
-# passed <policy> <seed>: summary.json exists and every check in it is true
+# passed <policy> <seed>: summary.json exists with every check true, AND run_config.json
+# matches this sweep (feed_seed == 100+seed, run_min == RUN_MIN, feed_speed == FEED_SPEED),
+# so a run made with other settings is re-run rather than mixed in.
 passed() {
-    python3 - "results/$1/seed$2/summary.json" <<'PY' 2>/dev/null
+    python3 - "results/$1/seed$2" "$2" "$RUN_MIN" "$FEED_SPEED" <<'PY' 2>/dev/null
 import json, sys
-c = json.load(open(sys.argv[1])).get("checks") or {}
-sys.exit(0 if c and all(c.values()) else 1)
+d, seed, run_min, speed = sys.argv[1], int(sys.argv[2]), float(sys.argv[3]), float(sys.argv[4])
+c = json.load(open(f"{d}/summary.json")).get("checks") or {}
+cfg = json.load(open(f"{d}/run_config.json"))
+ok = (bool(c) and all(c.values()) and int(cfg["feed_seed"]) == 100 + seed
+      and float(cfg["run_min"]) == run_min and float(cfg["feed_speed"]) == speed)
+sys.exit(0 if ok else 1)
 PY
 }
 
@@ -40,7 +47,7 @@ todo=()
 for seed in $SEEDS; do
     for policy in $POLICIES; do
         if [ "$FORCE" != 1 ] && passed "$policy" "$seed"; then
-            echo "==> skip $policy/seed$seed: already passed (FORCE=1 to re-run)"
+            echo "==> skip $policy/seed$seed: already passed with these settings (FORCE=1 to re-run)"
         else
             todo+=("$policy:$seed")
         fi

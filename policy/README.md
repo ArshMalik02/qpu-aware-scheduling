@@ -47,10 +47,10 @@ make aggregate                                               # re-run aggregate 
 
 **Unattended sweep (e.g. overnight):**
 ```bash
-nohup make sweep SEEDS="1 2 3 4 5" > results/sweep.log 2>&1 &
+setsid nohup make sweep SEEDS="1 2 3 4 5" > results/sweep.log 2>&1 < /dev/null &
 tail -f results/sweep.log      # ends with PASS or FAIL
 ```
-- **Resume:** run the same command again. Any policy/seed whose `summary.json` has every check passing is skipped (`FORCE=1` re-runs it), and a failed run is retried once.
+- **Resume:** run the same command again. Any policy/seed whose `summary.json` has every check passing, and whose `run_config.json` matches the sweep's feed seed, `RUN_MIN` and `FEED_SPEED`, is skipped (`FORCE=1` re-runs it), and a failed run is retried once.
 - **Clean starts:** a leftover queue before a run is cancelled and waited out. On any early exit, including a signal, `run_baseline.sh` stops `gen.py`, cancels the run's jobs, waits for an empty queue and stops the loop, which restores both QPUs. So the next run starts clean.
 
 For seed N, every policy uses workload seed N and feed seed 100+N. Results go to `results/<policy>/seed<N>/`. `aggregate.py` writes
@@ -112,7 +112,7 @@ given in wall seconds. At the default 36× speed a 45 s hold is 27 feed minutes,
 intersection of its `[start, end)` with every window on its node, summed, in wall seconds and feed
 minutes: how long it used a QPU the feed said was recalibrating.
 - This counts jobs already running when the recal starts, and jobs that start during it.
-- Reactive removes the second kind (up to its poll lag), but can't avoid the first, since it only reacts once the recal has started.
+- Reactive removes the second kind but can't avoid the first, since it only reacts once the recal has started. Windows start at the logged `QPU_OUT` (a poll time), so a job that starts in the poll lag before it counts as the first kind.
 - The first kind is what a predictive policy should bring down.
 
 The metric needs only `jobs.csv` and `transitions.log`, so it's computed the same way for every

@@ -135,7 +135,7 @@ for _ in $(seq 1 20); do ctl pgrep -f "/data/policy/(reactive|predictive).py" >/
 ctl sinfo -N -o "%N %G %t"
 
 sleep 3  # accounting
-ctl bash -c "sacct -X -P -S $start_utc -o JobID,JobName,State,Submit,Start,End,Elapsed,NodeList,ReqTRES%60 > $RUN/sacct.txt"
+ctl bash -c "sacct -X -P -S $start_utc -o JobID,JobName,State,Submit,Start,End,Elapsed,NodeList,ReqTRES%60,Flags > $RUN/sacct.txt"
 
 echo "==> Summary (times UTC; simulated)"
 status=0
