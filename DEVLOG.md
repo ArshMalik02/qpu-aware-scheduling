@@ -28,6 +28,7 @@
 | 5 | 127.8 | 96.6 | 0 |
 
 - Reactive's remaining overlap is jobs already running when a recal began.
+- **Predictive's 0 is by construction.** The feed applies its recal jitter (±15 min full, ±20 min quick) when it builds each recal window, and `next_recal.start` publishes that window's own start (`feed/calibration_feed.py`, `_day_windows` and `qpu_state`). So the predictive policy reads the exact time each recal begins, and its 0 recal overlap holds by construction. It says nothing about how the rule does when the forecast is wrong.
 - In no predictive run did a QPU/hybrid job's start + Slurm time limit cross the next logged `QPU_OUT` on its node. The smallest margin was 17 wall s (seed 5). That's checked against the logged poll times, the same windows the overlap metric uses.
 
 **p95 is one job.** p95 is the value at index int(0.95·n), so for n ≤ 20 it is the maximum. Per seed, QPU-only n = 12–19 and hybrid n = 5–13.
@@ -67,6 +68,8 @@ Everything here is **simulated**: the QPUs are Slurm GRES counters, the jobs run
 **Per-job time limits.** Every job used to get `--time=00:10:00`, far longer than any hold (max 240 s), and a rule based on time limits would have blocked almost everything. `gen.py` now sets `limit_s = ceil(hold_s × 1.5) + 30` as `--time=MM:SS`. **Slurm rounds limits up to whole minutes:** `--time=01:45` became `TimeLimit=00:02:00` on 26.05.2. So the manifest also records `slurm_limit_s`, and the predictive rule uses the limit Slurm enforces (read from `squeue %l`), not the requested one. A test checks that `hold_s < limit_s ≤ slurm_limit_s`. The same manifest is used for all three policies.
 
 **The rule** (`policy/predictive.py`, pure function `fits()`): a QPU job may start on a QPU only if that QPU is online (with `healthy` not false) and, in feed time, `now + limit + one poll interval ≤ next_recal.start`. Wall time is converted to feed time with `feed_speed` from `run_config.json`, so at 36× a 2-minute limit is 72 feed minutes and the 10 s poll adds 6. Unit tests cover: fits, doesn't fit, the exact boundary, a recal already running, two QPUs with one fitting, and none or both fitting.
+
+**Exact forecast.** The feed applies its recal jitter (±15 min full, ±20 min quick) when it builds each recal window, and `next_recal.start` publishes that window's own start (`feed/calibration_feed.py`, `_day_windows` and `qpu_state`). So the predictive policy reads the exact time each recal begins, and its 0 recal overlap holds by construction. It says nothing about how the rule does when the forecast is wrong.
 
 **Mechanism on 26.05.2** (no HRES):
 - QPU jobs are submitted held (`gen.py --hold-qpu`).

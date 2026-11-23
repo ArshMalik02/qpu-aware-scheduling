@@ -28,6 +28,45 @@ I haven't found published work where calibration or recalibration state reaches 
 
 Details, numbers and bugs hit along the way: [DEVLOG.md](DEVLOG.md).
 
+## Results (simulated)
+
+Three policies on the Docker cluster (Slurm 26.05.2), 5 seeds each, from [results/sweep_table.md](results/sweep_table.md) and [results/sweep_summary.csv](results/sweep_summary.csv):
+- **static:** the QPU is never taken out.
+- **reactive:** HRES-like; takes a node's QPU out while it recalibrates.
+- **predictive:** reactive, plus a QPU job starts only if its time limit ends before that QPU's next recal.
+
+**All of this is simulated.** QPUs are GRES counters, jobs run on Aer, and the calibration feed is simulated at 36× (1 wall s = 0.6 feed min). Drift, the recal schedule and job times are assumed.
+
+**The predictive policy reads the exact recal start.** The feed's jitter is applied before `next_recal.start` is published, so the published start is when the recal really begins. Predictive's 0 overlap therefore holds by construction under an exact forecast. It is not evidence about real recal forecasts.
+
+For seed N, every policy uses workload seed N and feed seed 100+N, with a byte-identical job manifest. Values are median across seeds [min–max], in feed minutes.
+
+| Metric | static (seeds 1,2,3,4,5) | reactive (seeds 1,2,3,4,5) | predictive (seeds 1,2,3,4,5) |
+|---|---|---|---|
+| Recal-overlap jobs | 6 [3–8] | 2 [1–3] | 0 [0–0] |
+| Recal overlap (feed min) | 116.4 [75–185.4] | 67.2 [21–96.6] | 0 [0–0] |
+| QPU-only wait median (feed min) | 0 [0–0.3] | 0 [0–10.2] | 2.4 [1.5–30.6] |
+| QPU-only wait p95 (feed min) | 24.6 [1.8–32.4] | 31.2 [3–81] | 121.8 [33–175.8] |
+| Hybrid wait p95 (feed min) | 9 [1.2–46.2] | 17.4 [1.2–46.2] | 130.8 [23.4–161.4] |
+| Classical wait p95 (feed min) | 1.8 [0.6–12] | 1.8 [0.6–14.4] | 10.8 [1.8–13.2] |
+| Completion median (feed min) | 23.1 [15–39.6] | 24 [16.2–44.4] | 32.4 [20.4–48.6] |
+| Completion p95 (feed min) | 117 [79.2–144.6] | 117 [82.2–144.6] | 172.8 [118.2–223.8] |
+| Submit rejections | 0 [0–0] | 0 [0–1] | 0 [0–0] |
+| Gate: jobs kept held at least once | 0 [0–0] | 0 [0–0] | 6 [2–7] |
+| Gate: re-holds | 0 [0–0] | 0 [0–0] | 0 [0–1] |
+
+All jobs completed in all 15 runs.
+
+**Recal overlap per seed** (feed min, static → reactive → predictive): seed 1: 116.4 → 69 → 0; seed 2: 91.8 → 67.2 → 0; seed 3: 185.4 → 65.4 → 0; seed 4: 75 → 21 → 0; seed 5: 127.8 → 96.6 → 0.
+
+- **p95 is one job here.** p95 is the value at index int(0.95·n), so for n ≤ 20 it equals the maximum. QPU-only n = 12–19 and hybrid n = 5–13 per seed.
+- **The cost of predictive vs reactive varies a lot by seed.** QPU-only wait p95 is 1.5–11× reactive's, hybrid 1.3–109× (the 109× is seed 5, where hybrid n = 5). One multiplier would hide that spread.
+- **Submit rejections aren't comparable across policies:** held submits are accepted while every QPU is out.
+
+![Recal overlap and QPU-only wait p95 per seed and policy (simulated)](results/sweep.png)
+
+How it's measured, and the limits: [policy/README.md](policy/README.md) and [DEVLOG.md](DEVLOG.md) (2026-11-22 and 2026-11-23).
+
 ## Roadmap
 
 - [x] Week 0: Slurm internals, overcommit test, fake `qpu` GRES
@@ -43,7 +82,8 @@ Details, numbers and bugs hit along the way: [DEVLOG.md](DEVLOG.md).
 - `cluster/`: the Docker Slurm cluster with a `qpu` GRES
 - `feed/`: the simulated QPU calibration feed
 - `jobs/`: simulated Aer jobs through `--gres=qpu:1`
-- `policy/`, `workload/`: the reactive up/down loop and the seeded workload (`make baseline-reactive SEED=1`)
+- `policy/`, `workload/`: the static, reactive and predictive policies, the seeded workload and the sweep runner (`make sweep SEEDS="1 2 3 4 5"`)
+- `results/`: per-run outputs (`results/<policy>/seed<N>/`) and the sweep table and chart
 - `docs/landscape.md`: where QPU state does and doesn't reach the scheduler
 - `experiments/week0/`: overcommit test, GRES patch, sbatch scripts
 - `DEVLOG.md`: what I ran, what I saw, what broke
