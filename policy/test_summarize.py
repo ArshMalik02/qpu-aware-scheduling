@@ -60,6 +60,33 @@ class RecalOverlapTests(unittest.TestCase):
         self.assertEqual(r["jobs"][0]["overlap_wall_s"], 60.0)
         self.assertEqual(r["jobs"][0]["overlap_feed_min"], 36.0)
 
+    def test_forecast_split_by_direction(self):
+        # c1's recal came 5 min EARLIER than published (offset +300 s); c2's came LATER (-120 s).
+        trans = [
+            {"wall": "2026-11-18T10:00:00Z", "feed_time": "2026-11-01T04:00:10Z", "node": "c1", "action": "QPU_OUT"},
+            {"wall": "2026-11-18T10:01:00Z", "feed_time": "2026-11-01T04:36:10Z", "node": "c1", "action": "QPU_IN"},
+            {"wall": "2026-11-18T10:05:00Z", "feed_time": "2026-11-01T07:00:05Z", "node": "c2", "action": "QPU_OUT"},
+        ]
+        fc = [
+            {"qpu": "qpu0", "kind": "quick", "true_start": "2026-11-01T04:00:00Z", "true_end": "2026-11-01T04:40:00Z",
+             "published_start": "2026-11-01T04:05:00Z", "offset_s": 300, "offset_min": 5.0},
+            {"qpu": "qpu1", "kind": "quick", "true_start": "2026-11-01T07:00:00Z", "true_end": "2026-11-01T07:40:00Z",
+             "published_start": "2026-11-01T06:58:00Z", "offset_s": -120, "offset_min": -2.0},
+            {"qpu": "qpu0", "kind": "full", "true_start": "2026-11-02T04:00:00Z", "true_end": "2026-11-02T05:40:00Z",
+             "published_start": "2026-11-02T04:00:00Z", "offset_s": 0, "offset_min": 0.0},  # after the run
+        ]
+        jobs = [job("1", "qpu", "c1", "2026-11-18T09:59:30", "2026-11-18T10:00:30"),   # 30 s, early recal
+                job("2", "hybrid", "c2", "2026-11-18T10:04:00", "2026-11-18T10:06:00")]  # 60 s, late recal
+        ov = s.recal_overlap(jobs, trans, speed=36, run_end=END)
+        r = s.forecast_split(ov, trans, fc, {"qpu0": "c1", "qpu1": "c2"}, 36,
+                             feed_end=datetime(2026, 11, 1, 18, 0))
+        d = r["overlap_by_direction"]
+        self.assertEqual((d["earlier_than_published"]["jobs"], d["earlier_than_published"]["wall_s"]), (1, 30.0))
+        self.assertEqual((d["later_than_published"]["jobs"], d["later_than_published"]["wall_s"]), (1, 60.0))
+        self.assertEqual(d["unmatched"]["jobs"], 0)
+        self.assertEqual(len(r["recals_in_run"]), 2)  # the day-2 recal is after feed_end
+        self.assertEqual(r["recals_by_direction"], {"earlier_than_published": 1, "later_than_published": 1, "exact": 0})
+
     def test_feed_min_uses_given_speed(self):
         self.assertEqual(s.feed_min(60, 36), 36.0)
         self.assertEqual(s.feed_min(60, 72), 72.0)

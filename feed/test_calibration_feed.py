@@ -132,6 +132,69 @@ class HresShapeTests(unittest.TestCase):
         b = [json.dumps(s, sort_keys=True) for _, s in self.sweep(f.FeedConfig(seed=11), days=1, step_min=17)]
         self.assertEqual(a, b)
 
+class ForecastErrorTests(unittest.TestCase):
+    """--forecast-err-min N: published next_recal.start = true start + U(-N, +N) min."""
+
+    def states(self, cfg, hours=48, step_min=7):
+        t = cfg.epoch
+        out = []
+        while t < cfg.epoch + timedelta(hours=hours):
+            out.append({q: f.qpu_state(cfg, q, t) for q in f.qpu_ids(cfg)})
+            t += timedelta(minutes=step_min)
+        return out
+
+    def test_n0_matches_default_exactly(self):
+        # Byte-identical JSON to a config that never heard of forecast error.
+        for seed in (42, 101, 105):
+            a = json.dumps(self.states(f.FeedConfig(seed=seed)), sort_keys=True)
+            b = json.dumps(self.states(f.FeedConfig(seed=seed, forecast_err_min=0)), sort_keys=True)
+            self.assertEqual(a, b)
+        log = f.forecast_log(f.FeedConfig(seed=101), f.FeedConfig.epoch, f.FeedConfig.epoch + timedelta(days=2))
+        self.assertTrue(log)
+        self.assertTrue(all(r["offset_s"] == 0 and r["published_start"] == r["true_start"] for r in log))
+
+    def test_offsets_stay_in_range(self):
+        for n in (15, 30, 60):
+            cfg = f.FeedConfig(seed=101, forecast_err_min=n)
+            log = f.forecast_log(cfg, cfg.epoch, cfg.epoch + timedelta(days=30))
+            self.assertGreater(len(log), 100)
+            offs = [r["offset_s"] for r in log]
+            self.assertTrue(all(-n * 60 <= o <= n * 60 for o in offs), (n, min(offs), max(offs)))
+            self.assertLess(min(offs), 0)   # both directions occur
+            self.assertGreater(max(offs), 0)
+
+    def test_same_seed_same_offsets(self):
+        mk = lambda: f.forecast_log(f.FeedConfig(seed=101, forecast_err_min=30),
+                                    f.FeedConfig.epoch, f.FeedConfig.epoch + timedelta(days=3))
+        self.assertEqual(mk(), mk())
+        other = f.forecast_log(f.FeedConfig(seed=102, forecast_err_min=30),
+                               f.FeedConfig.epoch, f.FeedConfig.epoch + timedelta(days=3))
+        self.assertNotEqual([r["offset_s"] for r in mk()], [r["offset_s"] for r in other])
+
+    def test_only_published_start_changes(self):
+        # The real recal (status, durations, everything else) stays at the true start.
+        exact = self.states(f.FeedConfig(seed=101))
+        err = self.states(f.FeedConfig(seed=101, forecast_err_min=60))
+        changed = 0
+        for a, b in zip(exact, err):
+            for q in a:
+                sa, sb = dict(a[q]), dict(b[q])
+                if sa["next_recal"]["start"] != sb["next_recal"]["start"]:
+                    changed += 1
+                sa["next_recal"] = {k: v for k, v in sa["next_recal"].items() if k != "start"}
+                sb["next_recal"] = {k: v for k, v in sb["next_recal"].items() if k != "start"}
+                self.assertEqual(sa, sb)
+        self.assertGreater(changed, 0)
+
+    def test_served_start_matches_log(self):
+        cfg = f.FeedConfig(seed=101, forecast_err_min=30)
+        log = f.forecast_log(cfg, cfg.epoch, cfg.epoch + timedelta(days=1))
+        for r in log[:6]:
+            just_before = f.parse_time(r["true_start"]) - timedelta(seconds=1)
+            st = f.qpu_state(cfg, r["qpu"], just_before)
+            self.assertEqual(st["next_recal"]["start"], r["published_start"])
+
+
 class HttpTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

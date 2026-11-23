@@ -107,11 +107,65 @@ def recal_overlap(jobs: list[dict], transitions: list[dict], speed: float, run_e
             ov = sum(o for _, o in parts)
             hits.append({"job_id": j["job_id"], "name": j["name"], "type": j["type"], "node": j["node"],
                          "qpu_out_at": [w.isoformat() + "Z" for w, _ in parts],
+                         "overlap_parts_wall_s": [round(o, 1) for _, o in parts],
                          "started_inside_window": any(w_out <= start < w_in for w_out, w_in in windows.get(j["node"], [])),
                          "overlap_wall_s": round(ov, 1), "overlap_feed_min": feed_min(ov, speed)})
     total = sum(h["overlap_wall_s"] for h in hits)
     return {"count": len(hits), "jobs": hits,
             "total_overlap_wall_s": round(total, 1), "total_overlap_feed_min": feed_min(total, speed)}
+
+
+def forecast_split(overlap: dict, transitions: list[dict], forecast: list[dict],
+                   mapping: dict[str, str], speed: float, feed_end: datetime | None) -> dict:
+    """Split recal overlap by the direction of each recal's forecast error (simulated).
+
+    forecast.log has one line per recal: true_start, published_start, offset_s
+    (= published - true). offset > 0: the recal came EARLIER than published, so a job
+    the gate let start can run into it. offset < 0: it came LATER than published, which
+    can only make the gate hold jobs longer. Each overlapping window (a logged QPU_OUT on
+    a node) is matched to the recal on that node's QPU whose true [start, end) contains
+    the QPU_OUT's feed time.
+    """
+    node_qpu = {n: q for q, n in mapping.items()}
+    out_feed = {(t["node"], t["wall"]): ts(t.get("feed_time")) for t in transitions if t.get("action") == "QPU_OUT"}
+
+    def recal_for(node: str, wall: str) -> dict | None:
+        ft = out_feed.get((node, wall))
+        for r in forecast:
+            if r["qpu"] == node_qpu.get(node) and ft and ts(r["true_start"]) <= ft < ts(r["true_end"]):
+                return r
+        return None
+
+    def direction(r: dict | None) -> str:
+        if r is None:
+            return "unmatched"
+        return "exact" if r["offset_s"] == 0 else ("earlier_than_published" if r["offset_s"] > 0 else "later_than_published")
+
+    keys = ("earlier_than_published", "later_than_published", "exact", "unmatched")
+    by_dir = {k: {"jobs": set(), "wall_s": 0.0} for k in keys}
+    per_recal: dict[tuple, dict] = {}
+    for h in overlap["jobs"]:
+        for wall, part in zip(h["qpu_out_at"], h.get("overlap_parts_wall_s", [h["overlap_wall_s"]])):
+            r = recal_for(h["node"], wall)
+            k = direction(r)
+            by_dir[k]["jobs"].add(h["job_id"])
+            by_dir[k]["wall_s"] += part
+            if r is not None:
+                pr = per_recal.setdefault((r["qpu"], r["true_start"]), {"jobs": set(), "wall_s": 0.0})
+                pr["jobs"].add(h["job_id"]); pr["wall_s"] += part
+    in_run = [r for r in forecast if feed_end is None or ts(r["true_start"]) <= feed_end]
+    recals = []
+    for r in in_run:
+        pr = per_recal.get((r["qpu"], r["true_start"]), {"jobs": set(), "wall_s": 0.0})
+        recals.append({"qpu": r["qpu"], "node": mapping.get(r["qpu"]), "kind": r["kind"],
+                       "true_start": r["true_start"], "published_start": r["published_start"],
+                       "offset_min": r["offset_min"], "direction": direction(r),
+                       "overlap_jobs": len(pr["jobs"]), "overlap_wall_s": round(pr["wall_s"], 1),
+                       "overlap_feed_min": feed_min(pr["wall_s"], speed)})
+    return {"recals_in_run": recals,
+            "overlap_by_direction": {k: {"jobs": len(v["jobs"]), "wall_s": round(v["wall_s"], 1),
+                                         "feed_min": feed_min(v["wall_s"], speed)} for k, v in by_dir.items()},
+            "recals_by_direction": {k: sum(r["direction"] == k for r in recals) for k in keys[:3]}}
 
 
 def _makespan(jobs: list[dict], speed: float) -> dict | None:
@@ -237,6 +291,13 @@ def main(argv: list[str] | None = None) -> int:
         checks["2_qpu_job_pending_while_qpu_out"] = len(pending_examples) > 0
         checks["3_classical_running_on_qpu_out_node"] = len(running_examples) > 0
     summary["checks"] = checks
+    # Forecast error (feed --forecast-err-min): split overlap by early/late recals.
+    summary["forecast_err_min"] = cfg.get("forecast_err_min", 0)
+    if (d / "forecast.log").exists():
+        mapping = dict(kv.split("=") for kv in cfg.get("map", "qpu0=c1,qpu1=c2").split(","))
+        feed_times = [ts(q.get("feed_time")) for q in load_jsonl(d / "queue.log") if q.get("feed_time")]
+        summary["forecast"] = forecast_split(summary["recal_overlap"], trans, load_jsonl(d / "forecast.log"),
+                                             mapping, speed, max(feed_times) if feed_times else None)
     (d / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
 
     print(json.dumps({k: summary[k] for k in ("jobs_by_type", "states", "transitions", "qpu_wait",
