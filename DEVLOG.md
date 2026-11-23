@@ -1,3 +1,56 @@
+## 2026-11-23: Forecast-error experiment (simulated, one seed)
+
+**Why:** in the 5-seed sweep, the predictive policy read the exact recal start, so its 0 overlap held by construction. This asks what happens when the published start is wrong.
+
+**Setup:**
+- **Feed:** `--forecast-err-min N` (`FORECAST_ERR_MIN`) publishes `next_recal.start` = true start + u·N feed min.
+  - u ~ U(−1, 1) is seeded per (feed seed, QPU, true start), so every N uses the same draws, scaled.
+  - The recal itself (status `paused`, the logged QPU_OUT/QPU_IN) still happens at the true start.
+  - N = 0 draws nothing. Its output is byte-identical to the previous feed across 17,280 checked states (6 seeds, 3 feed-days, every 3 min).
+  - Every (true, published, offset) is in each run's `forecast.log`.
+- **Runs:** predictive only, workload seed 1, feed seed 101, RUN_MIN 30, at N = 15, 30, 60, in `results/forecast_err/N<k>/seed1/`. All three passed their checks, and 55/55 jobs completed in each.
+- **Baselines:** the committed static, reactive and predictive (N = 0) seed-1 runs. Static and reactive don't read `next_recal`, so they're unaffected by N. The job manifest is byte-identical across all six.
+- **Table:** `results/forecast_err/table.md`, built by `policy/forecast_table.py`.
+
+| Metric | static | reactive | predictive N=0 | predictive N=15 | predictive N=30 | predictive N=60 |
+|---|---|---|---|---|---|---|
+| Forecast error N (feed min) | – | – | 0 | 15 | 30 | 60 |
+| Largest early offset in the run (feed min) | – | – | 0 | 4.6 | 9.2 | 18.42 |
+| Smallest gate cushion: limit − actual run + poll (feed min) | – | – | 30 | 29.4 | 29.4 | 29.4 |
+| Recal-overlap jobs | 6 | 2 | 0 | 0 | 0 | 0 |
+| Recal overlap (feed min) | 116.4 | 69 | 0 | 0 | 0 | 0 |
+| … from recals earlier than published: jobs | – | – | 0 | 0 | 0 | 0 |
+| … from recals earlier than published: feed min | – | – | 0 | 0 | 0 | 0 |
+| … from recals later than published: jobs | – | – | 0 | 0 | 0 | 0 |
+| … from recals later than published: feed min | – | – | 0 | 0 | 0 | 0 |
+| QPU-only wait p95 (feed min) | 16.2 | 81 | 121.8 | 120.6 | 124.2 | 123.6 |
+| Hybrid wait p95 (feed min) | 1.2 | 6 | 156 | 150.6 | 156.6 | 156.6 |
+| Classical wait p95 (feed min) | 1.2 | 1.2 | 13.2 | 21 | 21.6 | 22.2 |
+| Completion p95 (feed min) | 79.2 | 111.6 | 172.8 | 175.8 | 175.2 | 175.8 |
+| Jobs completed / total | 55/55 | 55/55 | 55/55 | 55/55 | 55/55 | 55/55 |
+| Gate: jobs kept held at least once | – | – | 7 | 7 | 7 | 7 |
+| Gate: releases | – | – | 32 | 32 | 32 | 32 |
+| Gate: re-holds | – | – | 0 | 0 | 0 | 0 |
+| Gate: ExcNodeList updates | – | – | 7 | 6 | 7 | 7 |
+
+**Per-recal offsets** (published − true, feed min; > 0 = the recal came earlier than published). There were four recals in the run's feed time:
+
+| Recal | N = 15 | N = 30 | N = 60 |
+|---|---|---|---|
+| qpu0 full | +0.83 | +1.67 | +3.33 |
+| qpu1 full | −0.42 | −0.85 | −1.7 |
+| qpu0 quick | −2.88 | −5.77 | −11.53 |
+| qpu1 quick | +4.6 | +9.2 | +18.42 |
+
+**Early/late split:** 0 overlap from recals that came earlier than published, and 0 from recals that came later, at every N.
+
+**What one seed shows:**
+- **Why there was no overlap.** The gate starts a QPU job only if start + Slurm limit + one poll ≤ published start. An early recal can therefore reach a job only if offset > (limit − actual run time) + poll. The smallest such cushion in these runs was 29.4 feed min (a ~21 s job with a 60 s limit, plus the 6-feed-min poll). The largest early offset that occurred was 18.42 feed min. So no recal in this seed came early enough to reach any job.
+- **The slack comes from the time-limit rule.** `limit = ceil(1.5·hold) + 30 s`, rounded up to whole minutes by Slurm. This experiment shows that slack absorbing forecast errors up to 18 feed min. It doesn't show how predictive behaves when an early offset exceeds the cushion. With N = 60, a draw beyond ~0.49 would be needed; seed 1's four draws are 0.06, −0.03, −0.19 and 0.31.
+- **Waits.** Late recals (offset < 0) can only make the gate hold jobs longer. QPU-only and hybrid p95 stayed within 6 feed min of N = 0 (120.6–124.2 vs 121.8; 150.6–156.6 vs 156). Gate counts were the same at every N (7 kept held, 32 releases, 0 re-holds).
+- **Classical p95** was 21–22.2 feed min at N = 15–60, vs 13.2 at N = 0. That's one job each (classical n = 23, so p95 is the second-largest wait). There's no repeat N = 0 run, so I can't separate this from run-to-run timing variation. Not explained.
+- **Limits.** This is one seed with four recals. These are observations, not results. Testing offsets beyond the cushion would need more seeds, larger N, or shorter time limits.
+
 ## 2026-11-23: 5-seed sweep (simulated)
 
 `make sweep SEEDS="1 2 3 4 5"` on the x86_64 Docker cluster (Slurm 26.05.2). QPUs are GRES counters, and the feed is simulated at 36× (1 wall s = 0.6 feed min). Drift, the recal schedule and job times are assumed.

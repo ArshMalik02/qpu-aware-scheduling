@@ -10,10 +10,12 @@ manifest.json is byte-identical to static seed 1's. Stdlib only.
 from __future__ import annotations
 
 import argparse
+import csv
 import hashlib
 import json
 import re
 import sys
+from datetime import datetime
 from pathlib import Path
 
 
@@ -46,6 +48,32 @@ def main(argv: list[str] | None = None) -> int:
     ref = md5["static"]
     same = all(v == ref for v in md5.values())
 
+    def cushion(name, d):
+        """Smallest (Slurm limit - actual run time) over QPU/hybrid jobs + one poll, feed min.
+
+        The gate starts a job only if start + limit + poll <= published start, so an early
+        recal (offset > 0) can reach the job only if offset > limit - run + poll.
+        """
+        if "predictive" not in name:
+            return None
+        cfg = json.loads((d / "run_config.json").read_text())
+        speed, poll = float(cfg["feed_speed"]), float(cfg.get("poll_interval_s", 10))
+        man = {f"{j['type']}-{j['idx']:03d}": j for j in json.loads((d / "manifest.json").read_text())["jobs"]}
+        best = None
+        for j in csv.DictReader((d / "jobs.csv").read_text().splitlines()):
+            if j["type"] == "classical" or not (j["start"] and j["end"]):
+                continue
+            run = (datetime.fromisoformat(j["end"]) - datetime.fromisoformat(j["start"])).total_seconds()
+            c = (man[j["name"]]["slurm_limit_s"] - run + poll) * speed / 60
+            best = c if best is None else min(best, c)
+        return round(best, 1) if best is not None else None
+
+    def max_early(name):
+        rec = g(S[name], "forecast", "recals_in_run")
+        if rec is None:
+            return None if name in ("static", "reactive") else 0
+        return max([r["offset_min"] for r in rec if r["offset_min"] > 0], default=0)
+
     def ovd(name, k, field):
         f = S[name].get("forecast")
         if f is None:
@@ -54,6 +82,8 @@ def main(argv: list[str] | None = None) -> int:
 
     rows = [
         ("Forecast error N (feed min)", lambda n: None if n in ("static", "reactive") else S[n].get("forecast_err_min", 0)),
+        ("Largest early offset in the run (feed min)", max_early),
+        ("Smallest gate cushion: limit − actual run + poll (feed min)", lambda n: cushion(n, dict(runs)[n])),
         ("Recal-overlap jobs", lambda n: g(S[n], "recal_overlap", "count")),
         ("Recal overlap (feed min)", lambda n: g(S[n], "recal_overlap", "total_overlap_feed_min")),
         ("… from recals earlier than published: jobs", lambda n: ovd(n, "earlier_than_published", "jobs")),
@@ -80,6 +110,9 @@ def main(argv: list[str] | None = None) -> int:
            f"Job manifest byte-identical to static seed {s} in every column: **{'yes' if same else 'NO'}** "
            f"(md5 {ref[:12]}…).", "",
            "p95 is the value at index int(0.95·n), so for n ≤ 20 it is the maximum (one job).", "",
+           "Gate cushion: the gate starts a QPU job only if start + Slurm limit + one poll ≤ published start, "
+           "so a recal that comes early by `offset` can only reach a job if offset > (limit − actual run time) "
+           "+ poll. The row gives the smallest such cushion over the run's QPU/hybrid jobs.", "",
            "| Metric | " + " | ".join(names) + " |", "|---|" + "---|" * len(names)]
     for label, fn in rows:
         out.append(f"| {label} | " + " | ".join(fmt(fn(n)) for n in names) + " |")

@@ -30,6 +30,8 @@ This runs [`run_baseline_reactive.sh`](run_baseline_reactive.sh), which does the
 | `RUN_MIN` | 20 | arrival window, minutes |
 | `RATE_PER_MIN` | 1.5 | mean arrivals per minute |
 | `DRAIN_MIN` | 15 | max wait for the queue to empty; anything left is cancelled |
+| `FORECAST_ERR_MIN` | 0 | feed forecast error N: published `next_recal.start` = true start + U(−N, +N) feed min; the recal itself stays at the true start. Each run writes `forecast.log` |
+| `DEST` | `results/<policy>/seed<N>` | where the run's files are copied |
 
 ## Three policies and the sweep
 
