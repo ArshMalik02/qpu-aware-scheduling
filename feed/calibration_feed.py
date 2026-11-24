@@ -25,6 +25,10 @@ Model (see feed/README.md for the sources behind the defaults):
     score from yesterday's calibration says little about today's (lag-1 ACF
     0.10-0.20).
   * Between recals, errors grow and T1 decays with time since the last recal.
+  * Forecast error (--forecast-err-min N, default 0): each recal's published
+    next_recal.start is its true start plus a seeded offset uniform in [-N, +N]
+    minutes. The recal itself (status "paused") still happens at the true start.
+    With N = 0 no offset is drawn and the output is exactly the same as before.
 
 Stdlib only. Python 3.9+.
 """
@@ -68,6 +72,8 @@ class FeedConfig:
     gate_err_1q: float = 2.5e-4
     # Capacity reported in the QRMI-shaped fields (max_slots / available_slots).
     slots: int = 1
+    # Forecast error: published next_recal.start = true start + U(-N, +N) minutes.
+    forecast_err_min: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -128,6 +134,44 @@ def _day_windows(cfg: FeedConfig, qpu: str, day: int) -> tuple[Window, ...]:
         windows.append(Window(start, start + timedelta(hours=r.uniform(1, 3)), "maintenance"))
 
     return tuple(sorted(windows, key=lambda w: w.start))
+
+
+def forecast_offset_s(cfg: FeedConfig, qpu: str, w: Window) -> int:
+    """Seeded forecast error for one recal, in whole seconds (published - true start).
+
+    offset = u * N with u ~ U(-1, 1) drawn from an RNG keyed by (seed, qpu, the recal's
+    true start), so it doesn't depend on query order, and changing N rescales the same
+    draws instead of reshuffling them. N = 0 returns 0 without drawing.
+    """
+    n = cfg.forecast_err_min
+    if not n:
+        return 0
+    u = _rng(cfg, qpu, "forecast", _iso(w.start)).uniform(-1.0, 1.0)
+    return round(u * n * 60)
+
+
+def published_start(cfg: FeedConfig, qpu: str, w: Window) -> datetime:
+    """next_recal.start as published: the true start plus the forecast offset."""
+    return w.start + timedelta(seconds=forecast_offset_s(cfg, qpu, w))
+
+
+def forecast_log(cfg: FeedConfig, t0: datetime, t1: datetime) -> list[dict]:
+    """Every recal starting in [t0, t1): true start, published start, offset (simulated)."""
+    out = []
+    for qpu in qpu_ids(cfg):
+        seen = set()
+        for day in range(_day_index(cfg, t0), _day_index(cfg, t1) + 1):
+            for w in _day_windows(cfg, qpu, day):
+                if w.kind == "maintenance" or not (t0 <= w.start < t1) or w.start in seen:
+                    continue
+                seen.add(w.start)
+                off = forecast_offset_s(cfg, qpu, w)
+                out.append({"qpu": qpu, "kind": w.kind, "true_start": _iso(w.start),
+                            "published_start": _iso(w.start + timedelta(seconds=off)),
+                            "true_end": _iso(w.end), "offset_s": off,
+                            "offset_min": round(off / 60, 2),
+                            "forecast_err_min": cfg.forecast_err_min, "simulated": True})
+    return sorted(out, key=lambda r: (r["true_start"], r["qpu"]))
 
 
 def _windows_around(cfg: FeedConfig, qpu: str, t: datetime) -> list[Window]:
@@ -221,7 +265,7 @@ def qpu_state(cfg: FeedConfig, qpu: str, t: datetime) -> dict:
         "status": status,
         "status_reason": reason,
         "next_recal": {
-            "start": _iso(upcoming.start),
+            "start": _iso(published_start(cfg, qpu, upcoming)),
             "kind": upcoming.kind,
             "duration_min": upcoming.duration_min,
         },
@@ -328,15 +372,26 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--full-recal-min", type=int, default=FeedConfig.full_recal_min)
     p.add_argument("--day-phi", type=float, default=FeedConfig.day_phi,
                    help="AR(1) coefficient for day-to-day calibration quality")
+    p.add_argument("--forecast-err-min", type=float, default=FeedConfig.forecast_err_min,
+                   help="publish next_recal.start = true start + U(-N, +N) min (default 0: exact)")
+    p.add_argument("--dump-forecast", nargs=2, metavar=("FROM", "TO"),
+                   help="print one JSON line per recal in [FROM, TO) (true/published start, "
+                        "offset) and exit, instead of serving")
     a = p.parse_args(argv)
 
     cfg = FeedConfig(
         seed=a.seed, n_qpus=a.qpus, slots=a.slots, epoch=parse_time(a.epoch), speed=a.speed,
         quick_recal_min=a.quick_recal_min, full_recal_min=a.full_recal_min, day_phi=a.day_phi,
+        forecast_err_min=a.forecast_err_min,
     )
+    if a.dump_forecast:
+        for rec in forecast_log(cfg, parse_time(a.dump_forecast[0]), parse_time(a.dump_forecast[1])):
+            print(json.dumps(rec))
+        return
     server = ThreadingHTTPServer((a.host, a.port), make_handler(cfg, SimClock(cfg)))
     print(f"SIMULATED calibration feed on http://{a.host}:{a.port} "
-          f"(seed={cfg.seed}, qpus={cfg.n_qpus}, speed={cfg.speed}x)", file=sys.stderr)
+          f"(seed={cfg.seed}, qpus={cfg.n_qpus}, speed={cfg.speed}x, "
+          f"forecast_err_min={cfg.forecast_err_min:g})", file=sys.stderr)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

@@ -107,6 +107,7 @@ services:
     hostname: feed
     entrypoint: ["python3", "/feed/calibration_feed.py"]
     command: ["--seed", "${FEED_SEED:-42}", "--speed", "${FEED_SPEED:-36}",
+              "--forecast-err-min", "${FORECAST_ERR_MIN:-0}",
               "--host", "0.0.0.0", "--port", "8787"]
     volumes:
       - ../feed:/feed:ro

@@ -30,6 +30,8 @@ This runs [`run_baseline_reactive.sh`](run_baseline_reactive.sh), which does the
 | `RUN_MIN` | 20 | arrival window, minutes |
 | `RATE_PER_MIN` | 1.5 | mean arrivals per minute |
 | `DRAIN_MIN` | 15 | max wait for the queue to empty; anything left is cancelled |
+| `FORECAST_ERR_MIN` | 0 | feed forecast error N: published `next_recal.start` = true start + U(−N, +N) feed min; the recal itself stays at the true start. Each run writes `forecast.log` |
+| `DEST` | `results/<policy>/seed<N>` | where the run's files are copied |
 
 ## Three policies and the sweep
 
@@ -66,6 +68,7 @@ For seed N, every policy uses workload seed N and feed seed 100+N. Results go to
 - The rule uses the time limit Slurm enforces, which is rounded up to whole minutes, converted to feed time with `feed_speed`.
 - Unlike an HRES prerun gate, the decision is made outside the scheduler, so it can lag by ~1 s.
 - A held submit is accepted even while every QPU is out. So predictive never has submit rejections, and that column isn't comparable across policies.
+- **Exact forecast:** the feed applies its recal jitter when it builds each recal window, and `next_recal.start` is that window's own start. So the predictive policy reads the exact time each recal begins, and its 0 recal overlap in the sweep holds by construction. It is not evidence about real, imperfect recal forecasts.
 
 **Time limits:** `limit_s = ceil(hold_s × 1.5) + 30`, as `--time=MM:SS`. Hold times are assumed.
 

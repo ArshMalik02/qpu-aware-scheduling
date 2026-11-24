@@ -1,3 +1,4 @@
 __pycache__/
 *.pyc
 results/sweep.log
+results/forecast_err/runs.log

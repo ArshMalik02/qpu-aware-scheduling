@@ -14,6 +14,9 @@
 #   RUN_MIN       workload arrival window in minutes (default 20; the sweep uses 30)
 #   RATE_PER_MIN  mean job arrivals per minute (default 1.5)
 #   DRAIN_MIN     max minutes to wait for the queue to empty afterwards (default 15)
+#   FORECAST_ERR_MIN  feed forecast error N (default 0 = exact): published next_recal.start
+#                 = true start + U(-N, +N) feed min; the recal itself stays at the true start
+#   DEST          where results go (default results/<policy>/seed<N>)
 #
 # Unattended-safe: a non-empty queue before the run is cancelled (and waited out) instead
 # of failing; on any early exit the trap cancels this run's jobs, waits for the queue to
@@ -27,9 +30,10 @@ export FEED_SPEED=${FEED_SPEED:-36}
 RUN_MIN=${RUN_MIN:-20}
 RATE_PER_MIN=${RATE_PER_MIN:-1.5}
 DRAIN_MIN=${DRAIN_MIN:-15}
+export FORECAST_ERR_MIN=${FORECAST_ERR_MIN:-0}
 INTERVAL_S=10
 RUN=/data/results/run
-DEST="results/${POLICY}/seed${SEED}"
+DEST=${DEST:-results/${POLICY}/seed${SEED}}
 
 case "$POLICY" in
     static)     LOOP="python3 /data/policy/reactive.py --observe-only --interval $INTERVAL_S"; HOLD="" ;;
@@ -65,7 +69,7 @@ on_exit() {
 trap on_exit EXIT
 trap 'exit 130' INT TERM HUP  # so a killed run still goes through on_exit
 
-echo "==> [$POLICY seed $SEED] cluster + feed sidecar (feed seed $FEED_SEED, speed ${FEED_SPEED}x; simulated)"
+echo "==> [$POLICY seed $SEED] cluster + feed sidecar (feed seed $FEED_SEED, speed ${FEED_SPEED}x, forecast error ±${FORECAST_ERR_MIN} min; simulated)"
 ( cd cluster && docker compose --profile reactive up -d >/dev/null && \
   docker compose --profile reactive up -d --force-recreate feed >/dev/null )
 for _ in $(seq 1 30); do
@@ -100,12 +104,13 @@ ctl rm -rf "$RUN" && ctl mkdir -p "$RUN" /data/jobs
 docker cp --quiet jobs/. slurmctld:/data/jobs/
 docker cp --quiet policy slurmctld:/data/
 docker cp --quiet workload slurmctld:/data/
+docker cp --quiet feed slurmctld:/data/
 ctl rm -rf /data/jobs/results
 start_utc=$(ctl date -u +%Y-%m-%dT%H:%M:%S)
 
 # Run config: summarize.py reads policy and feed_speed from here.
-printf '{"policy": "%s", "seed": %s, "feed_seed": %s, "feed_speed": %s, "run_min": %s, "rate_per_min": %s, "poll_interval_s": %s, "map": "qpu0=c1,qpu1=c2", "start_utc": "%s", "simulated": true}\n' \
-    "$POLICY" "$SEED" "$FEED_SEED" "$FEED_SPEED" "$RUN_MIN" "$RATE_PER_MIN" "$INTERVAL_S" "$start_utc" \
+printf '{"policy": "%s", "seed": %s, "feed_seed": %s, "feed_speed": %s, "forecast_err_min": %s, "run_min": %s, "rate_per_min": %s, "poll_interval_s": %s, "map": "qpu0=c1,qpu1=c2", "start_utc": "%s", "simulated": true}\n' \
+    "$POLICY" "$SEED" "$FEED_SEED" "$FEED_SPEED" "$FORECAST_ERR_MIN" "$RUN_MIN" "$RATE_PER_MIN" "$INTERVAL_S" "$start_utc" \
     | docker exec -i slurmctld tee "$RUN/run_config.json" >/dev/null
 
 echo "==> Starting the $POLICY loop (poll ${INTERVAL_S} s, qpu0->c1, qpu1->c2)"
@@ -137,13 +142,26 @@ ctl sinfo -N -o "%N %G %t"
 sleep 3  # accounting
 ctl bash -c "sacct -X -P -S $start_utc -o JobID,JobName,State,Submit,Start,End,Elapsed,NodeList,ReqTRES%60,Flags > $RUN/sacct.txt"
 
+# Every recal's true and published start over the run's feed time (+4 h), from the same
+# seeded function the feed serves (calibration_feed.py --dump-forecast).
+ctl bash -c "cd /data/feed && python3 - $RUN <<'PY' > $RUN/forecast.log
+import json, sys
+from datetime import timedelta
+import calibration_feed as f
+q = [json.loads(l) for l in open(sys.argv[1] + '/queue.log') if l.strip()]
+end = max(f.parse_time(x['feed_time']) for x in q if x.get('feed_time')) + timedelta(hours=4)
+cfg = f.FeedConfig(seed=$FEED_SEED, speed=$FEED_SPEED, forecast_err_min=$FORECAST_ERR_MIN)
+for r in f.forecast_log(cfg, cfg.epoch, end):
+    print(json.dumps(r))
+PY"
+
 echo "==> Summary (times UTC; simulated)"
 status=0
 ctl python3 /data/policy/summarize.py --run-dir "$RUN" || status=$?
 
 echo "==> Copying results to $DEST/"
 rm -rf "$DEST" && mkdir -p "$DEST"
-for f in run_config.json manifest.json submitted.log transitions.log queue.log loop.out sacct.txt jobs.csv summary.json; do
+for f in run_config.json manifest.json submitted.log transitions.log queue.log loop.out sacct.txt jobs.csv summary.json forecast.log; do
     docker cp --quiet "slurmctld:$RUN/$f" "$DEST/$f"
 done
 echo "    copied to $DEST/"

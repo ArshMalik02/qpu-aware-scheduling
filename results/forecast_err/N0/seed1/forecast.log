@@ -1,0 +1,6 @@
+{"qpu": "qpu0", "kind": "full", "true_start": "2026-11-01T04:00:19Z", "published_start": "2026-11-01T04:00:19Z", "true_end": "2026-11-01T05:40:19Z", "offset_s": 0, "offset_min": 0.0, "forecast_err_min": 0, "simulated": true}
+{"qpu": "qpu1", "kind": "full", "true_start": "2026-11-01T04:40:17Z", "published_start": "2026-11-01T04:40:17Z", "true_end": "2026-11-01T06:20:17Z", "offset_s": 0, "offset_min": 0.0, "forecast_err_min": 0, "simulated": true}
+{"qpu": "qpu0", "kind": "quick", "true_start": "2026-11-01T11:50:22Z", "published_start": "2026-11-01T11:50:22Z", "true_end": "2026-11-01T12:30:22Z", "offset_s": 0, "offset_min": 0.0, "forecast_err_min": 0, "simulated": true}
+{"qpu": "qpu1", "kind": "quick", "true_start": "2026-11-01T12:39:22Z", "published_start": "2026-11-01T12:39:22Z", "true_end": "2026-11-01T13:19:22Z", "offset_s": 0, "offset_min": 0.0, "forecast_err_min": 0, "simulated": true}
+{"qpu": "qpu0", "kind": "quick", "true_start": "2026-11-01T18:26:55Z", "published_start": "2026-11-01T18:26:55Z", "true_end": "2026-11-01T19:06:55Z", "offset_s": 0, "offset_min": 0.0, "forecast_err_min": 0, "simulated": true}
+{"qpu": "qpu1", "kind": "quick", "true_start": "2026-11-01T19:03:14Z", "published_start": "2026-11-01T19:03:14Z", "true_end": "2026-11-01T19:43:14Z", "offset_s": 0, "offset_min": 0.0, "forecast_err_min": 0, "simulated": true}
